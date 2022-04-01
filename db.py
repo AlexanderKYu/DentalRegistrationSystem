@@ -40,7 +40,7 @@ def db_init():
                  province VARCHAR(20) NOT NULL,
                  postal_code VARCHAR(20) NOT NULL,
                  manager INTEGER,
-                 num_of_receptionist INTEGER NOT NULL,
+                 num_of_receptionist INTEGER,
                  FOREIGN KEY (manager) REFERENCES employee(ID)
                  CONSTRAINT valid_recep CHECK (num_of_receptionist <= 2)
                  );
@@ -228,8 +228,8 @@ def delete_all_data():
 # Make sure the data is initialized by the function initialize_data
 def create_sample_data():
     # street_number, street_name, city, province, postal_code, manager, num_of_receptionist
-    insert_branch(290, 'Bremner', 'Toronto', 'ON', 'M5V3L9', 'NULL', 1)
-    insert_branch(2000, 'Meadowvale', 'Toronto', 'ON', 'M1B5K7', 'NULL', 2)
+    insert_branch(290, 'Bremner', 'Toronto', 'ON', 'M5V3L9', 'NULL', 0)
+    insert_branch(2000, 'Meadowvale', 'Toronto', 'ON', 'M1B5K7', 'NULL', 0)
 
     # salary, branch_ID, role, first_name, middle_initial, last_name, street_number, street_name, apt_number, city, province, postal_code, SSN, email, gender
     insert_emp(60000, 2, 'emp', 'Alexander', 'KS', 'Yu', 27, 'Ambercroft', 'NULL', 'Scarborough', 'ON', 'M1W2Z6', 300120635, 'ayu041@uottawa.ca', 'male')
@@ -273,6 +273,14 @@ def insert_emp(salary, branch_ID, role, first_name, middle_initial, last_name, s
     c.execute(f"""INSERT INTO employee (ID, employee_type, salary, branch_ID)
                   VALUES ({entry[0]}, '{role}', {salary}, {branch_ID});""")
     conn.commit()
+
+    if (role == 'recep'):
+        status = assign_recep(branch_ID, entry[0])
+        if(isinstance(status, str)):
+            c.execute(f"""DELETE FROM employee WHERE ID = {entry[0]}""")
+            c.execute(f"""DELETE FROM users WHERE ID = {entry[0]}""")
+            conn.commit()
+            return status
     newEntry = get_emp_ID(entry[0])
     return newEntry
 
@@ -302,6 +310,16 @@ def assign_man(branch_ID, manager):
     conn = db_connection()
     c = conn.cursor()
     c.execute(f"""UPDATE branch SET manager = {manager} WHERE branch_ID = {branch_ID}""")
+    conn.commit()
+
+def assign_recep(branch_ID, recep):
+    conn = db_connection()
+    c = conn.cursor()
+    entry = get_branch_branch_ID(branch_ID)
+    if (entry[-1] == 2):
+        print("ERROR: This branch already has two receptionists")
+        return "ERROR: This branch already has two receptionists"
+    c.execute(f"""UPDATE branch SET num_of_receptionist = {entry[-1] + 1} WHERE branch_ID = {branch_ID}""")
     conn.commit()
 
 def get_users():
