@@ -64,22 +64,23 @@ def db_init():
                  FOREIGN KEY (ID) REFERENCES users(ID)
                  );
     """)
+
+    c.execute("""CREATE TABLE IF NOT EXISTS appointment (
+                 appointment_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                 patient_ID INTEGER NOT NULL,
+                 employee_ID INTEGER NOT NULL,
+                 date VARCHAR(10) NOT NULL,
+                 start_time VARCHAR(5) NOT NULL,
+                 end_time VARCHAR(5) NOT NULL,
+                 appointment_type VARCHAR(20) NOT NULL,
+                 status VARCHAR(20) NOT NULL,
+                 room_number INTEGER NOT NULL,
+                 FOREIGN KEY (patient_ID) REFERENCES patient(ID),
+                 FOREIGN KEY (employee_ID) REFERENCES employee(ID)
+                 );
+    """)
     conn.commit()
 
-# -- Create table appointment(
-# -- 	appointment_ID integer not null,
-# -- 	patient_ID integer not null,
-# -- 	employee_ID integer not null,
-# -- 	date date not null,
-# -- 	start_time time not null,
-# -- 	end_time time not null,
-# -- 	appointment_type varchar(20) not null,
-# -- 	status varchar(20) not null,
-# -- 	room_number integer not null,
-# -- 	Primary Key (appointment_ID),
-# -- 	Foreign Key (patient_ID) references patient(ID),
-# -- 	Foreign Key (employee_ID) references employee(ID)
-# -- );
 # -----------------------------------------------------------------------
 #
 # -- Create table insurance_claim(
@@ -205,14 +206,14 @@ def db_init():
 # -- );
 
 # Only use this function after the termination of all data / tables
-def initialize_data():
-    conn = db_connection()
-    c = conn.cursor()
-    db_init()
-    # insert branch first, to insert emp
-    c.execute(f"INSERT INTO branch VALUES (1, 1, 'street_name', 'city', 'province', 'postal_code', 1, 2)")
-    c.execute(f"INSERT INTO users VALUES (1, 'admin_role', 'f_name', 'm_init', 'l_name', 1, 'street', NULL, 'city', 'province', 'A1AB2B', 999999999, 'admin@email.com', 'gender')")
-    conn.commit()
+# def initialize_data():
+#     conn = db_connection()
+#     c = conn.cursor()
+#     db_init()
+#     # insert branch first, to insert emp
+#     c.execute(f"INSERT INTO branch VALUES (1, 1, 'street_name', 'city', 'province', 'postal_code', 1, 2)")
+#     c.execute(f"INSERT INTO users VALUES (1, 'admin_role', 'f_name', 'm_init', 'l_name', 1, 'street', NULL, 'city', 'province', 'A1AB2B', 999999999, 'admin@email.com', 'gender')")
+#     conn.commit()
 
 # Do not use this function unless needed
 def delete_all_data():
@@ -222,6 +223,7 @@ def delete_all_data():
     c.execute(f"DROP TABLE IF EXISTS employee")
     c.execute(f"DROP TABLE IF EXISTS patient")
     c.execute(f"DROP TABLE IF EXISTS branch")
+    c.execute(f"DROP TABLE IF EXISTS appointment")
     db_init()
     conn.commit()
 
@@ -243,6 +245,10 @@ def create_sample_data():
     # insurance, date_of_birth, age, role, first_name, middle_initial, last_name, street_number, street_name, apt_number, city, province, postal_code, SSN, email, gender
     insert_pat('Manulife', '1972/12/15', 49, 'pat', 'Emily', 'R', 'Cruz', 23, 'King Edward', 'NULL', 'Ottawa', 'ON', 'K2N5G6', 151312658, 'emil54@yahoo.ca', 'female')
     insert_pat('Desjardins', '1999/06/25', 21, 'pat', 'Sheena', 'M', 'Lam', 4, 'Rideau', 'NULL', 'Ottawa', 'ON', 'K1N2F3', 192568463, 'sheeshna09@gmail.com', 'female')
+    insert_pat('Aviva', '2001/02/13', 21, 'pat', 'Daniel', 'NULL', 'Ng', 5, 'Huntwood', 'NULL', 'Scarborough', 'ON', 'M1W5G7', 753126145, 'dannyphantom@gmail.com', 'male')
+
+    # patient_ID, employee_ID, date, start_time, end_time, appointment_type, status, room_number
+    insert_appointment(6, 2, '2022/04/15', '11:25', '13:10', 'cleaning', 'scheduled', 14)
 
 # Please do not use this function to insert, use the insert_emp or insert_pat
 def insert_users(role, first_name, middle_initial, last_name, street_number, street_name, apt_number, city, province, postal_code, SSN, email, gender):
@@ -306,6 +312,15 @@ def insert_branch(street_number, street_name, city, province, postal_code, manag
     entry = get_branch_street(street_number, street_name)
     return entry
 
+def insert_appointment(patient_ID, employee_ID, date, start_time, end_time, appointment_type, status, room_number):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"""INSERT INTO appointment (patient_ID, employee_ID, date, start_time, end_time, appointment_type, status, room_number)
+                  VALUES ({patient_ID}, {employee_ID}, '{date}', '{start_time}', '{end_time}', '{appointment_type}', '{status}', {room_number})""")
+    conn.commit()
+    entry = get_appointment_patient_info(patient_ID, date)
+    return entry
+
 def assign_man(branch_ID, manager):
     conn = db_connection()
     c = conn.cursor()
@@ -340,6 +355,13 @@ def get_branch():
     conn = db_connection()
     c = conn.cursor()
     c.execute(f"SELECT * FROM branch")
+    conn.commit()
+    return c.fetchall()
+
+def get_appointment():
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM appointment")
     conn.commit()
     return c.fetchall()
 
@@ -399,12 +421,18 @@ def get_emp_ID(ID):
     conn.commit()
     return c.fetchone()
 
+def get_appointment_patient_info(patient_ID, date):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM appointment WHERE patient_ID = {patient_ID} AND date = '{date}'")
+    conn.commit()
+    return c.fetchone()
+
 def print_tables():
     conn = db_connection()
     c = conn.cursor()
     c.execute(f"SELECT name FROM sqlite_schema WHERE type='table'")
     print(c.fetchall())
-    # for loop to print per table
 
 def printer(table, table_name):
 
@@ -414,12 +442,13 @@ def printer(table, table_name):
     print("*******************************************************************")
 
 def main():
-    # delete_all_data()
+    delete_all_data()
     # initialize_data()
-    # create_sample_data()
+    create_sample_data()
     printer(get_users(), 'users')
     printer(get_emp(), 'employee')
     printer(get_pat(), 'patient')
     printer(get_branch(), 'branch')
+    printer(get_appointment(), 'appointment')
 
 main()
