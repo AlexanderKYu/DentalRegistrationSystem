@@ -114,18 +114,17 @@ def db_init():
                  FOREIGN KEY (payment_ID) REFERENCES patient_billing(payment_ID)
                  );
     """)
+
+    c.execute("""CREATE TABLE IF NOT EXISTS fee_charge (
+                 fee_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                 appPro_ID INTEGER NOT NULL,
+                 fee_code INTEGER NOT NULL,
+                 charge INTEGER NOT NULL,
+                 FOREIGN KEY (appPro_ID) REFERENCES appointment_procedure(appPro_ID)
+                 );
+    """)
     conn.commit()
-# ------------------------------------------------------------------------
-#
-# -- Create table fee_Charge(
-# -- 	fee_ID integer not null,
-# -- 	appPro_ID integer not null,
-# -- 	fee_code integer not null,
-# -- 	charge integer not null,
-# -- 	Primary Key (fee_ID),
-# -- 	Foreign Key (appPro_ID) references appointment_procedure(appPro_ID)
-# -- );
-#
+    
 # -- Create table invoice(
 # -- 	appPro_ID integer not null,
 # -- 	date_of_issue date not null,
@@ -229,6 +228,7 @@ def delete_all_data():
     c.execute("DROP TABLE IF EXISTS insurance_claim")
     c.execute("DROP TABLE IF EXISTS patient_billing")
     c.execute("DROP TABLE IF EXISTS appointment_procedure")
+    c.execute("DROP TABLE IF EXISTS fee_charge")
     db_init()
     conn.commit()
 
@@ -262,6 +262,10 @@ def create_sample_data():
 
     # patient_ID, date, procedure_code, procedure_type, description, tooth_involved, payment_ID
     insert_appointment_procedure(get_users_SSN(753126145)[0], '2022/04/21', 5, 'cleaning', 'General cleaning', 'NULL', 1)
+
+    # no fee charge as user was not late / cancelled 24 hours before
+    # appPro_ID, fee_code, charge
+    insert_fee_charge(1, 0, 0)
 
 # Please do not use this function to insert, use the insert_emp or insert_pat
 def insert_users(role, first_name, middle_initial, last_name, street_number, street_name, apt_number, city, province, postal_code, SSN, email, gender):
@@ -340,7 +344,9 @@ def insert_insurance_claim(claim_code):
     c.execute(f"""INSERT INTO insurance_claim (claim_code)
                   VALUES ({claim_code})""")
     conn.commit()
-    claim_ID = c.lastrowid
+    row_ID = c.lastrowid
+    c.execute(f"""SELECT * FROM insurance_claim WHERE rowid = {row_ID}""")
+    claim_ID = c.fetchone()[0]
     entry = get_insurance_claim_ID(claim_ID)
     return entry
 
@@ -350,7 +356,9 @@ def insert_patient_billing(patient_ID, patient_charge, insurance_charge, insuran
     c.execute(f"""INSERT INTO patient_billing (patient_ID, patient_charge, insurance_charge, insurance, claim_ID, covered_by_emp)
                   VALUES ({patient_ID}, {patient_charge}, {insurance_charge}, '{insurance}', {claim_ID}, {covered_by_emp})""")
     conn.commit()
-    payment_ID = c.lastrowid
+    row_ID = c.lastrowid
+    c.execute(f"""SELECT * FROM patient_billing WHERE rowid = {row_ID}""")
+    payment_ID = c.fetchone()[0]
     entry = get_patient_billing_payment_ID(payment_ID)
     return entry
 
@@ -360,8 +368,22 @@ def insert_appointment_procedure(patient_ID, date, procedure_code, procedure_typ
     c.execute(f"""INSERT INTO appointment_procedure (patient_ID, date, procedure_code, procedure_type, description, tooth_involved, payment_ID)
                   VALUES ({patient_ID}, '{date}', {procedure_code}, '{procedure_type}', '{description}', {tooth_involved}, {payment_ID})""")
     conn.commit()
-    appPro_ID = c.lastrowid
+    row_ID = c.lastrowid
+    c.execute(f"""SELECT * FROM appointment_procedure WHERE rowid = {row_ID}""")
+    appPro_ID = c.fetchone()[0]
     entry = get_appointment_procedure_appPro_ID(appPro_ID)
+    return entry
+
+def insert_fee_charge(appPro_ID, fee_code, charge):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"""INSERT INTO fee_charge (appPro_ID, fee_code, charge)
+                  VALUES ({appPro_ID}, {fee_code}, {charge})""")
+    conn.commit()
+    row_ID = c.lastrowid
+    c.execute(f"""SELECT * FROM fee_charge WHERE rowid = {row_ID}""")
+    fee_ID = c.fetchone()[0]
+    entry = get_fee_charge_fee_ID(fee_ID)
     return entry
 
 def assign_man(branch_ID, manager):
@@ -426,6 +448,13 @@ def get_appointment_procedure():
     conn = db_connection()
     c = conn.cursor()
     c.execute(f"SELECT * FROM appointment_procedure")
+    conn.commit()
+    return c.fetchall()
+
+def get_fee_charge():
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM fee_charge")
     conn.commit()
     return c.fetchall()
 
@@ -513,6 +542,13 @@ def get_appointment_procedure_appPro_ID(appPro_ID):
     conn.commit()
     return c.fetchone()
 
+def get_fee_charge_fee_ID(fee_ID):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM fee_charge WHERE fee_ID = {fee_ID}")
+    conn.commit()
+    return c.fetchone()
+
 def print_tables():
     conn = db_connection()
     c = conn.cursor()
@@ -531,13 +567,14 @@ def main():
     # initialize_data()
     create_sample_data()
     # print_tables()
-    # printer(get_users(), 'users')
-    # printer(get_emp(), 'employee')
-    # printer(get_pat(), 'patient')
-    # printer(get_branch(), 'branch')
-    # printer(get_appointment(), 'appointment')
+    printer(get_users(), 'users')
+    printer(get_emp(), 'employee')
+    printer(get_pat(), 'patient')
+    printer(get_branch(), 'branch')
+    printer(get_appointment(), 'appointment')
     printer(get_insurance_claim(), 'insurance_claim')
     printer(get_patient_billing(), 'patient_billing')
     printer(get_appointment_procedure(), 'appointment_procedure')
+    printer(get_fee_charge(), 'fee_charge')
 
 main()
