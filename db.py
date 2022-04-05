@@ -79,40 +79,42 @@ def db_init():
                  FOREIGN KEY (employee_ID) REFERENCES employee(ID)
                  );
     """)
-    conn.commit()
 
-# -----------------------------------------------------------------------
-#
-# -- Create table insurance_claim(
-# -- 	claim_ID integer not null,
-# -- 	claim_code integer not null,
-# -- 	Primary key (claim_ID)
-# -- );
-#
-# -- Create table patient_billing(
-# -- 	payment_ID integer not null,
-# -- 	patient_charge integer not null,
-# -- 	insurance_charge integer not null,
-# -- 	insurance varchar(20) not null,
-# -- 	claim_ID integer not null,
-# -- 	Primary Key (payment_ID),
-# -- 	Foreign Key (claim_ID) references insurance_claim(claim_ID)
-# -- );
-#
-# -- Create table appointment_procedure(
-# -- 	appPro_ID integer not null,
-# -- 	patient_ID integer not null,
-# -- 	date date not null,
-# -- 	procedure_code integer not null,
-# -- 	procedure_type varchar(20) not null,
-# -- 	description varchar(300) not null,
-# -- 	tooth_involved integer not null,
-# -- 	payment_ID integer not null,
-# -- 	Primary Key (appPro_ID),
-# -- 	Foreign Key (patient_ID) references patient(ID),
-# -- 	Foreign Key (payment_ID) references patient_billing(payment_ID)
-# -- );
-#
+    c.execute("""CREATE TABLE IF NOT EXISTS insurance_claim (
+                 claim_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                 claim_code INTEGER NOT NULL
+                 );
+    """)
+
+    # patient_charge and insurance_charge can be null? maybe?
+    c.execute("""CREATE TABLE IF NOT EXISTS patient_billing (
+                 payment_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                 patient_ID INTEGER NOT NULL,
+                 patient_charge INTEGER NOT NULL,
+                 insurance_charge INTEGER NOT NULL,
+                 insurance VARCHAR(20) NOT NULL,
+                 claim_ID INTEGER NOT NULL,
+                 covered_by_emp INTEGER,
+                 FOREIGN KEY (claim_ID) REFERENCES insurance_claim(claim_ID),
+                 FOREIGN KEY (covered_by_emp) REFERENCES employee(ID),
+                 FOREIGN KEY (patient_ID) REFERENCES patient(ID)
+                 );
+    """)
+    # description can be NULL and tooth_involved can also be null if there is no tooth exactly (ex. general cleaning)
+    c.execute("""CREATE TABLE IF NOT EXISTS appointment_procedure (
+                 appPro_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                 patient_ID INTEGER NOT NULL,
+                 date VARCHAR(10) NOT NULL,
+                 procedure_code INTEGER NOT NULL,
+                 procedure_type VARCHAR(20) NOT NULL,
+                 description VARCHAR(300),
+                 tooth_involved INTEGER,
+                 payment_ID INTEGER NOT NULL,
+                 FOREIGN KEY (patient_ID) REFERENCES patient(ID),
+                 FOREIGN KEY (payment_ID) REFERENCES patient_billing(payment_ID)
+                 );
+    """)
+    conn.commit()
 # ------------------------------------------------------------------------
 #
 # -- Create table fee_Charge(
@@ -219,11 +221,14 @@ def db_init():
 def delete_all_data():
     conn = db_connection()
     c = conn.cursor()
-    c.execute(f"DROP TABLE IF EXISTS users")
-    c.execute(f"DROP TABLE IF EXISTS employee")
-    c.execute(f"DROP TABLE IF EXISTS patient")
-    c.execute(f"DROP TABLE IF EXISTS branch")
-    c.execute(f"DROP TABLE IF EXISTS appointment")
+    c.execute("DROP TABLE IF EXISTS users")
+    c.execute("DROP TABLE IF EXISTS employee")
+    c.execute("DROP TABLE IF EXISTS patient")
+    c.execute("DROP TABLE IF EXISTS branch")
+    c.execute("DROP TABLE IF EXISTS appointment")
+    c.execute("DROP TABLE IF EXISTS insurance_claim")
+    c.execute("DROP TABLE IF EXISTS patient_billing")
+    c.execute("DROP TABLE IF EXISTS appointment_procedure")
     db_init()
     conn.commit()
 
@@ -250,13 +255,21 @@ def create_sample_data():
     # patient_ID, employee_ID, date, start_time, end_time, appointment_type, status, room_number
     insert_appointment(6, 2, '2022/04/15', '11:25', '13:10', 'cleaning', 'scheduled', 14)
 
+    insert_insurance_claim(5000)
+    insert_insurance_claim(6500)
+
+    insert_patient_billing(get_users_SSN(753126145)[0], 250, 50, 'Aviva', 1, 'NULL')
+
+    # patient_ID, date, procedure_code, procedure_type, description, tooth_involved, payment_ID
+    insert_appointment_procedure(get_users_SSN(753126145)[0], '2022/04/21', 5, 'cleaning', 'General cleaning', 'NULL', 1)
+
 # Please do not use this function to insert, use the insert_emp or insert_pat
 def insert_users(role, first_name, middle_initial, last_name, street_number, street_name, apt_number, city, province, postal_code, SSN, email, gender):
     conn = db_connection()
     c = conn.cursor()
     c.execute(f"SELECT * FROM users WHERE SSN = {SSN}")
     list = c.fetchall()
-    if(SSN >  999999999):
+    if(SSN >  999999999 or SSN < 99999999):
         print("ERROR: Invalid SSN")
         return "ERROR: Invalid SSN"
     elif (len(list) != 0):
@@ -321,6 +334,36 @@ def insert_appointment(patient_ID, employee_ID, date, start_time, end_time, appo
     entry = get_appointment_patient_info(patient_ID, date)
     return entry
 
+def insert_insurance_claim(claim_code):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"""INSERT INTO insurance_claim (claim_code)
+                  VALUES ({claim_code})""")
+    conn.commit()
+    claim_ID = c.lastrowid
+    entry = get_insurance_claim_ID(claim_ID)
+    return entry
+
+def insert_patient_billing(patient_ID, patient_charge, insurance_charge, insurance, claim_ID, covered_by_emp):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"""INSERT INTO patient_billing (patient_ID, patient_charge, insurance_charge, insurance, claim_ID, covered_by_emp)
+                  VALUES ({patient_ID}, {patient_charge}, {insurance_charge}, '{insurance}', {claim_ID}, {covered_by_emp})""")
+    conn.commit()
+    payment_ID = c.lastrowid
+    entry = get_patient_billing_payment_ID(payment_ID)
+    return entry
+
+def insert_appointment_procedure(patient_ID, date, procedure_code, procedure_type, description, tooth_involved, payment_ID):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"""INSERT INTO appointment_procedure (patient_ID, date, procedure_code, procedure_type, description, tooth_involved, payment_ID)
+                  VALUES ({patient_ID}, '{date}', {procedure_code}, '{procedure_type}', '{description}', {tooth_involved}, {payment_ID})""")
+    conn.commit()
+    appPro_ID = c.lastrowid
+    entry = get_appointment_procedure_appPro_ID(appPro_ID)
+    return entry
+
 def assign_man(branch_ID, manager):
     conn = db_connection()
     c = conn.cursor()
@@ -362,6 +405,27 @@ def get_appointment():
     conn = db_connection()
     c = conn.cursor()
     c.execute(f"SELECT * FROM appointment")
+    conn.commit()
+    return c.fetchall()
+
+def get_insurance_claim():
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM insurance_claim")
+    conn.commit()
+    return c.fetchall()
+
+def get_patient_billing():
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM patient_billing")
+    conn.commit()
+    return c.fetchall()
+
+def get_appointment_procedure():
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM appointment_procedure")
     conn.commit()
     return c.fetchall()
 
@@ -428,6 +492,27 @@ def get_appointment_patient_info(patient_ID, date):
     conn.commit()
     return c.fetchone()
 
+def get_insurance_claim_ID(claim_ID):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM insurance_claim WHERE claim_ID = {claim_ID}")
+    conn.commit()
+    return c.fetchone()
+
+def get_patient_billing_payment_ID(payment_ID):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM patient_billing WHERE payment_ID = {payment_ID}")
+    conn.commit()
+    return c.fetchone()
+
+def get_appointment_procedure_appPro_ID(appPro_ID):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM appointment_procedure WHERE appPro_ID = {appPro_ID}")
+    conn.commit()
+    return c.fetchone()
+
 def print_tables():
     conn = db_connection()
     c = conn.cursor()
@@ -436,7 +521,7 @@ def print_tables():
 
 def printer(table, table_name):
 
-    print(f"Table: {table_name}\n")
+    print(f"\nTable: {table_name}\n")
     for x in table:
         print(x)
     print("*******************************************************************")
@@ -445,10 +530,14 @@ def main():
     delete_all_data()
     # initialize_data()
     create_sample_data()
-    printer(get_users(), 'users')
-    printer(get_emp(), 'employee')
-    printer(get_pat(), 'patient')
-    printer(get_branch(), 'branch')
-    printer(get_appointment(), 'appointment')
+    # print_tables()
+    # printer(get_users(), 'users')
+    # printer(get_emp(), 'employee')
+    # printer(get_pat(), 'patient')
+    # printer(get_branch(), 'branch')
+    # printer(get_appointment(), 'appointment')
+    printer(get_insurance_claim(), 'insurance_claim')
+    printer(get_patient_billing(), 'patient_billing')
+    printer(get_appointment_procedure(), 'appointment_procedure')
 
 main()

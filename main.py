@@ -9,7 +9,8 @@ def home():
     # status = insert_emp('client', 'John', 'D', 'Doe', 12, 'Toronto', 'Ontario', 123123123, 'JohnDoe@gmail.com', 'male')
     # if ("ERROR" in status):
     #     return status
-    return "Hello World! page has rendered!"
+    num = 12
+    return f"Hello World! page has rendered!<h1>{num}<h1>"
 
 @app.route("/users")
 def user_info():
