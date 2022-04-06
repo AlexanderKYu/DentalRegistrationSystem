@@ -123,33 +123,32 @@ def db_init():
                  FOREIGN KEY (appPro_ID) REFERENCES appointment_procedure(appPro_ID)
                  );
     """)
+
+    c.execute("""CREATE TABLE IF NOT EXISTS invoice (
+                 appPro_ID INTEGER NOT NULL,
+                 date_of_issue VARCHAR(10) NOT NULL,
+                 patient_ID INTEGER NOT NULL,
+                 patient_charge INTEGER NOT NULL,
+                 insurance_charge INTEGER NOT NULL,
+                 discount INTEGER NOT NULL,
+                 penalty INTEGER NOT NULL,
+                 fee_ID INTEGER NOT NULL,
+                 insurance VARCHAR(20) NOT NULL,
+                 FOREIGN KEY (appPro_ID) REFERENCES appointment_procedure(appPro_ID),
+                 FOREIGN KEY (patient_ID) REFERENCES patient(ID),
+                 FOREIGN KEY (fee_ID) REFERENCES fee_charge(fee_ID)
+                 );
+    """)
+
+    c.execute("""CREATE TABLE IF NOT EXISTS amount (
+                 appPro_ID INTEGER NOT NULL,
+                 quantity INTEGER NOT NULL,
+                 substance_type VARCHAR(20) NOT NULL,
+                 FOREIGN KEY (appPro_ID) REFERENCES appointment_procedure(appPro_ID)
+                 );
+    """)
     conn.commit()
-    
-# -- Create table invoice(
-# -- 	appPro_ID integer not null,
-# -- 	date_of_issue date not null,
-# -- 	patient_ID integer not null,
-# -- 	patient_charge integer not null,
-# -- 	insurance_charge integer not null,
-# -- 	discount integer not null,
-# -- 	penalty integer not null,
-# -- 	fee_ID integer not null,
-# -- 	insurance varchar(20) not null,
-# -- 	Foreign Key (appPro_ID) references appointment_procedure(appPro_ID),
-# -- 	Foreign Key (patient_ID) references patient(ID),
-# -- 	Foreign Key (fee_ID) references fee_charge(fee_ID)
-# -- );
-#
-# -----------------------------------------------------------------------
-#
-# -- Create table amount(
-# -- 	appPro_ID integer not null,
-# -- 	quantity integer not null,
-# -- 	substance_type varchar(20) not null,
-# -- 	Primary Key (amount_ID),
-# -- 	Foreign Key (appPro_ID) references appointment_procedure(appPro_ID)
-# -- );
-#
+
 # -- Create table treatment(
 # -- 	treatment_ID integer not null,
 # -- 	appointment_ID integer not null,
@@ -229,6 +228,8 @@ def delete_all_data():
     c.execute("DROP TABLE IF EXISTS patient_billing")
     c.execute("DROP TABLE IF EXISTS appointment_procedure")
     c.execute("DROP TABLE IF EXISTS fee_charge")
+    c.execute("DROP TABLE IF EXISTS invoice")
+    c.execute("DROP TABLE IF EXISTS amount")
     db_init()
     conn.commit()
 
@@ -258,6 +259,7 @@ def create_sample_data():
     insert_insurance_claim(5000)
     insert_insurance_claim(6500)
 
+    # patient_ID, patient_charge, insurance_charge, insurance, claim_ID, covered_by_emp
     insert_patient_billing(get_users_SSN(753126145)[0], 250, 50, 'Aviva', 1, 'NULL')
 
     # patient_ID, date, procedure_code, procedure_type, description, tooth_involved, payment_ID
@@ -266,6 +268,11 @@ def create_sample_data():
     # no fee charge as user was not late / cancelled 24 hours before
     # appPro_ID, fee_code, charge
     insert_fee_charge(1, 0, 0)
+
+    # appPro_ID, date_of_issue, patient_ID, patient_charge, insurance_charge, discount, penalty, fee_ID, insurance
+    insert_invoice(1, '2022/04/21', get_users_SSN(753126145)[0], 250, 50, 0, 0, 1, get_pat_ID(get_users_SSN(753126145)[0])[1])
+
+    insert_amount(1, 50, 'Flouride')
 
 # Please do not use this function to insert, use the insert_emp or insert_pat
 def insert_users(role, first_name, middle_initial, last_name, street_number, street_name, apt_number, city, province, postal_code, SSN, email, gender):
@@ -386,6 +393,29 @@ def insert_fee_charge(appPro_ID, fee_code, charge):
     entry = get_fee_charge_fee_ID(fee_ID)
     return entry
 
+def insert_invoice(appPro_ID, date_of_issue, patient_ID, patient_charge, insurance_charge, discount, penalty, fee_ID, insurance):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"""INSERT INTO invoice (appPro_ID, date_of_issue, patient_ID, patient_charge, insurance_charge, discount, penalty, fee_ID, insurance)
+                  VALUES ({appPro_ID}, '{date_of_issue}', {patient_ID}, {patient_charge}, {insurance_charge}, {discount}, {penalty}, {fee_ID}, '{insurance}')""")
+    conn.commit()
+    entry = get_invoice_appPro_ID(appPro_ID)
+    return entry
+
+def insert_amount(appPro_ID, quantity, substance_type):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"""INSERT INTO amount (appPro_ID, quantity, substance_type)
+                  VALUES ({appPro_ID}, {quantity}, '{substance_type}')""")
+    conn.commit()
+    row_ID = c.lastrowid
+    c.execute(f"""SELECT * FROM amount WHERE rowid = {row_ID}""")
+    tuple = c.fetchone()
+    appPro_ID, substance_type = tuple[0], tuple[2]
+    print(f"appPro_ID: {appPro_ID}, substance_type: {substance_type}")
+    entry = get_amount_appPro_ID_substance_type(appPro_ID, substance_type)
+    return entry
+
 def assign_man(branch_ID, manager):
     conn = db_connection()
     c = conn.cursor()
@@ -455,6 +485,20 @@ def get_fee_charge():
     conn = db_connection()
     c = conn.cursor()
     c.execute(f"SELECT * FROM fee_charge")
+    conn.commit()
+    return c.fetchall()
+
+def get_invoice():
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM invoice")
+    conn.commit()
+    return c.fetchall()
+
+def get_amount():
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM amount")
     conn.commit()
     return c.fetchall()
 
@@ -549,6 +593,20 @@ def get_fee_charge_fee_ID(fee_ID):
     conn.commit()
     return c.fetchone()
 
+def get_invoice_appPro_ID(appPro_ID):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM invoice WHERE appPro_ID = {appPro_ID}")
+    conn.commit()
+    return c.fetchone()
+
+def get_amount_appPro_ID_substance_type(appPro_ID, substance_type):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM amount WHERE appPro_ID = {appPro_ID} AND substance_type = '{substance_type}'")
+    conn.commit()
+    return c.fetchone()
+
 def print_tables():
     conn = db_connection()
     c = conn.cursor()
@@ -576,5 +634,7 @@ def main():
     printer(get_patient_billing(), 'patient_billing')
     printer(get_appointment_procedure(), 'appointment_procedure')
     printer(get_fee_charge(), 'fee_charge')
+    printer(get_invoice(), 'invoice')
+    printer(get_amount(), 'amount')
 
 main()
