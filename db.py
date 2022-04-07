@@ -200,14 +200,23 @@ def db_init():
                  FOREIGN KEY (ID) REFERENCES users(ID)
                  );
     """)
+
+    c.execute("""CREATE TABLE IF NOT EXISTS payment (
+                 payment_ID INTEGER NOT NULL,
+                 payment_type VARCHAR(20) NOT NULL,
+                 payment_number INTEGER,
+                 FOREIGN KEY (payment_ID) REFERENCES patient_billing(payment_ID)
+                 );
+    """)
+
+    c.execute("""CREATE TABLE IF NOT EXISTS symptom (
+                 treatment_ID INTEGER NOT NULL,
+                 symptom_type VARCHAR(20) NOT NULL,
+                 FOREIGN KEY (treatment_ID) REFERENCES treatment(treatment_ID)
+                 );
+    """)
     conn.commit()
 
-# -- Create table payment(
-# -- 	payment_ID integer not null,
-# -- 	payment_type varchar(20) not null,
-# -- 	Foreign Key (payment_ID) references patient_billing(payment_ID)
-# -- );
-#
 # -- Create table symptom(
 # -- 	treatment_ID integer not null,
 # -- 	symptom_type varchar(20) not null,
@@ -244,6 +253,8 @@ def delete_all_data():
     c.execute("DROP TABLE IF EXISTS review")
     c.execute("DROP TABLE IF EXISTS guardian")
     c.execute("DROP TABLE IF EXISTS phone")
+    c.execute("DROP TABLE IF EXISTS payment")
+    c.execute("DROP TABLE IF EXISTS symptom")
     db_init()
     conn.commit()
 
@@ -304,6 +315,12 @@ def create_sample_data():
     # ID, type, phone_number
     insert_phone(get_users_SSN(300120635)[0], 'cell', '(647)123-4567')
     insert_phone(get_users_SSN(300120635)[0], 'work', '(416)123-4567')
+
+    # payment_ID, payment_type, payment_number
+    insert_payment(get_patient_billing_patient_ID(get_users_SSN(753126145)[0])[0][0], 'credit card', 111111111111)
+
+    # treatment_ID, symptom_type
+    insert_symptom(get_treatment()[0][0], 'drowsy')
 
 # Please do not use this function to insert, use the insert_emp or insert_pat
 def insert_users(role, first_name, middle_initial, last_name, street_number, street_name, apt_number, city, province, postal_code, SSN, email, gender):
@@ -519,6 +536,26 @@ def insert_phone(ID, type, phone_number):
     c.execute(f"""SELECT * FROM phone WHERE rowid = {row_ID}""")
     return c.fetchone()
 
+def insert_payment(payment_ID, payment_type, payment_number):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"""INSERT INTO payment (payment_ID, payment_type, payment_number)
+                  VALUES ({payment_ID}, '{payment_type}', {payment_number})""")
+    conn.commit()
+    row_ID = c.lastrowid
+    c.execute(f"""SELECT * FROM payment WHERE rowid = {row_ID}""")
+    return c.fetchone()
+
+def insert_symptom(treatment_ID, symptom_type):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"""INSERT INTO symptom (treatment_ID, symptom_type)
+                  VALUES ({treatment_ID}, '{symptom_type}')""")
+    conn.commit()
+    row_ID = c.lastrowid
+    c.execute(f"""SELECT * FROM treatment WHERE rowid = {row_ID}""")
+    return c.fetchone()
+
 def assign_man(branch_ID, manager):
     conn = db_connection()
     c = conn.cursor()
@@ -640,6 +677,20 @@ def get_phone():
     conn.commit()
     return c.fetchall()
 
+def get_payment():
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM payment")
+    conn.commit()
+    return c.fetchall()
+
+def get_symptom():
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM symptom")
+    conn.commit()
+    return c.fetchall()
+
 def get_users_ID(ID):
     conn = db_connection()
     c = conn.cursor()
@@ -717,6 +768,20 @@ def get_patient_billing_payment_ID(payment_ID):
     conn.commit()
     return c.fetchone()
 
+def get_patient_billing_patient_ID(patient_ID):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM patient_billing WHERE patient_ID = {patient_ID}")
+    conn.commit()
+    return c.fetchall()
+
+def get_symptom_treatment_ID(treatment_ID):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM symptom WHERE treatment_ID = {treatment_ID}")
+    conn.commit()
+    return c.fetchall()
+
 def get_appointment_procedure_appPro_ID(appPro_ID):
     conn = db_connection()
     c = conn.cursor()
@@ -787,6 +852,13 @@ def get_phone_ID_type(ID, type):
     conn.commit()
     return c.fetchone()
 
+def get_payment_payment_ID(payment_ID):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM payment WHERE payment_ID = {payment_ID}")
+    conn.commit()
+    return c.fetchall()
+
 def print_tables():
     conn = db_connection()
     c = conn.cursor()
@@ -794,8 +866,12 @@ def print_tables():
     print(c.fetchall())
 
 def printer(table, table_name):
-
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM {table_name}")
     print(f"\nTable: {table_name}\n")
+    names = list(map(lambda a: a[0], c.description))
+    print(names)
     for x in table:
         print(x)
     print("*******************************************************************")
@@ -821,5 +897,7 @@ def main():
     printer(get_review(), 'review')
     printer(get_guard(), 'guardian')
     printer(get_phone(), 'phone')
+    printer(get_payment(), 'payment')
+    printer(get_symptom(), 'symptom')
 
 main()
