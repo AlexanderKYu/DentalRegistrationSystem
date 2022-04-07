@@ -87,6 +87,7 @@ def db_init():
     """)
 
     # patient_charge and insurance_charge can be null? maybe?
+    # add in appointment_procedure
     c.execute("""CREATE TABLE IF NOT EXISTS patient_billing (
                  payment_ID INTEGER PRIMARY KEY AUTOINCREMENT,
                  patient_ID INTEGER NOT NULL,
@@ -101,6 +102,7 @@ def db_init():
                  );
     """)
     # description can be NULL and tooth_involved can also be null if there is no tooth exactly (ex. general cleaning)
+    # add in appointment_ID
     c.execute("""CREATE TABLE IF NOT EXISTS appointment_procedure (
                  appPro_ID INTEGER PRIMARY KEY AUTOINCREMENT,
                  patient_ID INTEGER NOT NULL,
@@ -147,52 +149,59 @@ def db_init():
                  FOREIGN KEY (appPro_ID) REFERENCES appointment_procedure(appPro_ID)
                  );
     """)
+
+    c.execute("""CREATE TABLE IF NOT EXISTS treatment (
+                 treatment_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                 appointment_ID INTEGER NOT NULL,
+                 appPro_ID INTEGER NOT NULL,
+                 appointment_type VARCHAR(20) NOT NULL,
+                 treatment_type VARCHAR(20) NOT NULL,
+                 medication VARCHAR(20) NOT NULL,
+                 tooth_involved INTEGER,
+                 comment VARCHAR(300) NOT NULL,
+                 FOREIGN KEY (appointment_ID) REFERENCES appointment(appointment_ID),
+                 FOREIGN KEY (appPro_ID) REFERENCES appointment_procedure(appPro_ID)
+                 );
+    """)
+
+    c.execute("""CREATE TABLE IF NOT EXISTS record (
+                 patient_ID INTEGER NOT NULL,
+                 treatment_ID INTEGER NOT NULL,
+                 FOREIGN KEY (patient_ID) REFERENCES patient(ID),
+                 FOREIGN KEY (treatment_ID) REFERENCES treatment(treatment_ID)
+                 );
+    """)
+
+    c.execute("""CREATE TABLE IF NOT EXISTS review (
+                 patient_ID INTEGER NOT NULL,
+                 professionalism INTEGER NOT NULL,
+                 communication INTEGER NOT NULL,
+                 cleanliness INTEGER NOT NULL,
+                 value INTEGER NOT NULL,
+                 FOREIGN KEY (patient_ID) REFERENCES patient(ID)
+                 );
+    """)
+
+    c.execute("""CREATE TABLE IF NOT EXISTS guardian (
+                 ID INTEGER NOT NULL,
+                 insurance VARCHAR(20) NOT NULL,
+                 date_of_birth VARCHAR(10) NOT NULL,
+                 age INTEGER NOT NULL,
+                 looks_over INTEGER NOT NULL,
+                 FOREIGN KEY (ID) REFERENCES users(ID),
+                 FOREIGN KEY (looks_over) REFERENCES patient(ID)
+                 );
+    """)
+
+    c.execute("""CREATE TABLE IF NOT EXISTS phone (
+                 ID INTEGER NOT NULL,
+                 type VARCHAR(20) NOT NULL,
+                 phone_number VARCHAR(13) NOT NULL,
+                 FOREIGN KEY (ID) REFERENCES users(ID)
+                 );
+    """)
     conn.commit()
 
-# -- Create table treatment(
-# -- 	treatment_ID integer not null,
-# -- 	appointment_ID integer not null,
-# -- 	appPro_ID integer not null,
-# -- 	appointment_type varchar(20) not null,
-# -- 	treatment_type varchar(20) not null,
-# -- 	medication varchar(20) not null,
-# -- 	tooth_involved integer not null,
-# -- 	comment varchar(300),
-# -- 	Primary Key (treatment_ID),
-# -- 	Foreign Key (appointment_ID) references appointment(appointment_ID),
-# -- 	Foreign Key (appPro_ID) references appointment_procedure(appPro_ID)
-# -- );
-#
-# -- Create table Record(
-# -- 	patient_ID integer not null,
-# -- 	treatment_ID integer not null,
-# -- 	Foreign Key (patient_ID) references patient(ID),
-# -- 	Foreign Key (treatment_ID) references treatment(treatment_ID)
-# -- );
-#
-# -- Create table Review(
-# -- 	patient_ID integer not null,
-# -- 	professionalism integer not null,
-# -- 	communication integer not null,
-# -- 	cleanliness integer not null,
-# -- 	value integer not null,
-# -- 	Foreign Key (patient_ID) references patient(ID)
-# -- );
-#
-# -- Create table Gurardian(
-# -- 	ID integer unique not null,
-# -- 	insurance varchar(20) not null,
-# -- 	date_of_birth date not null,
-# -- 	age integer not null,
-# -- 	Foreign Key (ID) references Users(ID)
-# -- );
-#
-# -- Create table phone(
-# -- 	ID integer not null,
-# -- 	phone_number varchar(16) not null,
-# -- 	Foreign Key (ID) references users(ID)
-# -- );
-#
 # -- Create table payment(
 # -- 	payment_ID integer not null,
 # -- 	payment_type varchar(20) not null,
@@ -230,6 +239,11 @@ def delete_all_data():
     c.execute("DROP TABLE IF EXISTS fee_charge")
     c.execute("DROP TABLE IF EXISTS invoice")
     c.execute("DROP TABLE IF EXISTS amount")
+    c.execute("DROP TABLE IF EXISTS treatment")
+    c.execute("DROP TABLE IF EXISTS record")
+    c.execute("DROP TABLE IF EXISTS review")
+    c.execute("DROP TABLE IF EXISTS guardian")
+    c.execute("DROP TABLE IF EXISTS phone")
     db_init()
     conn.commit()
 
@@ -273,6 +287,23 @@ def create_sample_data():
     insert_invoice(1, '2022/04/21', get_users_SSN(753126145)[0], 250, 50, 0, 0, 1, get_pat_ID(get_users_SSN(753126145)[0])[1])
 
     insert_amount(1, 50, 'Flouride')
+
+    # appointment_ID, appPro_ID, appointment_type, treatment_type, medication, tooth_involved, comment
+    insert_treatment(1, 1, 'cleaning', 'None', 'None', 'NULL', 'General cleaning')
+
+    # patient_ID, treatment_ID
+    insert_record(get_users_SSN(753126145)[0], 1)
+
+    # patient_ID, professionalism, communication, cleanliness, value
+    insert_review(get_users_SSN(753126145)[0], 5, 5, 5, 5)
+
+    insert_pat('Sunlife', '2015/01/15', 7, 'pat', 'John', 'B', 'Flabs', 13, 'Marylane', 'NULL', 'Ottawa', 'ON', 'K1N3Z7', 301242471, 'jflabs@gmail.com', 'male')
+    # insurance, date_of_birth, age, looks_over, role, first_name, middle_initial, last_name, street_number, street_name, apt_number, city, province, postal_code, SSN, email, gender
+    insert_guard('Sunlife', '1995/03/12', 27, get_users_SSN(301242471)[0], 'guard', 'Claire', 'NULL', 'Flabs', 13, 'Marylane', 'NULL', 'Ottawa', 'ON', 'K1N3Z7', 687478291, 'claire23@gmail.com', 'female')
+
+    # ID, type, phone_number
+    insert_phone(get_users_SSN(300120635)[0], 'cell', '(647)123-4567')
+    insert_phone(get_users_SSN(300120635)[0], 'work', '(416)123-4567')
 
 # Please do not use this function to insert, use the insert_emp or insert_pat
 def insert_users(role, first_name, middle_initial, last_name, street_number, street_name, apt_number, city, province, postal_code, SSN, email, gender):
@@ -412,9 +443,81 @@ def insert_amount(appPro_ID, quantity, substance_type):
     c.execute(f"""SELECT * FROM amount WHERE rowid = {row_ID}""")
     tuple = c.fetchone()
     appPro_ID, substance_type = tuple[0], tuple[2]
-    print(f"appPro_ID: {appPro_ID}, substance_type: {substance_type}")
     entry = get_amount_appPro_ID_substance_type(appPro_ID, substance_type)
     return entry
+
+def insert_treatment(appointment_ID, appPro_ID, appointment_type, treatment_type, medication, tooth_involved, comment):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"""INSERT INTO treatment (appointment_ID, appPro_ID, appointment_type, treatment_type, medication, tooth_involved, comment)
+                  VALUES ({appointment_ID}, {appPro_ID}, '{appointment_type}', '{treatment_type}', '{medication}', {tooth_involved}, '{comment}')""")
+    conn.commit()
+    row_ID = c.lastrowid
+    c.execute(f"""SELECT * FROM treatment WHERE rowid = {row_ID}""")
+    treatment_ID = c.fetchone()[0]
+    entry = get_treatment_treatment_ID(treatment_ID)
+    return entry
+
+def insert_record(patient_ID, treatment_ID):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"""INSERT INTO record (patient_ID, treatment_ID)
+                  VALUES ({patient_ID}, {treatment_ID})""")
+    conn.commit()
+    row_ID = c.lastrowid
+    c.execute(f"""SELECT * FROM record WHERE rowid = {row_ID}""")
+    return c.fetchone()
+
+def insert_review(patient_ID, professionalism, communication, cleanliness, value):
+    conn = db_connection()
+    c = conn.cursor()
+    # change so that only one review is possible
+    c.execute(f"SELECT * FROM review WHERE patient_ID = {patient_ID}")
+    list = c.fetchall()
+    if (len(list) != 0):
+        # print("Patient already made a review!")
+        return "Patient already made a review!"
+
+    c.execute(f"""INSERT INTO review (patient_ID, professionalism, communication, cleanliness, value)
+                  VALUES ({patient_ID}, {professionalism}, {communication}, {cleanliness}, {value})""")
+    conn.commit()
+    entry = get_review_patient_ID(patient_ID)
+    return entry
+
+def insert_guard(insurance, date_of_birth, age, looks_over, role, first_name, middle_initial, last_name, street_number, street_name, apt_number, city, province, postal_code, SSN, email, gender):
+    conn = db_connection()
+    c = conn.cursor()
+    entry = insert_users(role, first_name, middle_initial, last_name, street_number, street_name, apt_number, city, province, postal_code, SSN, email, gender)
+    conn.commit()
+    if(isinstance(entry, str)):
+        if("system" in entry):
+            # user is already in the system we can still add them!
+            guard = get_users_SSN(SSN)
+            c.execute(f"""INSERT INTO guardian (ID, insurance, date_of_birth, age, looks_over)
+                          VALUES ({guard[0]}, '{insurance}', '{date_of_birth}', {age}, {looks_over})""")
+            conn.commit()
+            row_ID = c.lastrowid
+            c.execute(f"""SELECT * FROM guardian WHERE rowid = {row_ID}""")
+            guard_ID = c.fetchone()[0]
+            newEntry = get_guard_ID(guard_ID)
+            return newEntry
+
+        return entry
+    c.execute(f"""INSERT INTO guardian (ID, insurance, date_of_birth, age, looks_over)
+                  VALUES ({entry[0]}, '{insurance}', '{date_of_birth}', {age}, {looks_over})""")
+    conn.commit()
+    newEntry = get_guard_ID(entry[0])
+    return newEntry
+
+def insert_phone(ID, type, phone_number):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"""INSERT INTO phone (ID, type, phone_number)
+                  VALUES ({ID}, '{type}', '{phone_number}')""")
+    conn.commit()
+    row_ID = c.lastrowid
+    c.execute(f"""SELECT * FROM phone WHERE rowid = {row_ID}""")
+    return c.fetchone()
 
 def assign_man(branch_ID, manager):
     conn = db_connection()
@@ -499,6 +602,41 @@ def get_amount():
     conn = db_connection()
     c = conn.cursor()
     c.execute(f"SELECT * FROM amount")
+    conn.commit()
+    return c.fetchall()
+
+def get_treatment():
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM treatment")
+    conn.commit()
+    return c.fetchall()
+
+def get_record():
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM record")
+    conn.commit()
+    return c.fetchall()
+
+def get_review():
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM review")
+    conn.commit()
+    return c.fetchall()
+
+def get_guard():
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM guardian")
+    conn.commit()
+    return c.fetchall()
+
+def get_phone():
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM phone")
     conn.commit()
     return c.fetchall()
 
@@ -607,6 +745,48 @@ def get_amount_appPro_ID_substance_type(appPro_ID, substance_type):
     conn.commit()
     return c.fetchone()
 
+def get_treatment_treatment_ID(treatment_ID):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM treatment WHERE treatment_ID = {treatment_ID}")
+    conn.commit()
+    return c.fetchone()
+
+def get_record_patient_ID(patient_ID):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM record WHERE patient_ID = {patient_ID}")
+    conn.commit()
+    return c.fetchone()
+
+def get_review_patient_ID(patient_ID):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM review WHERE patient_ID = {patient_ID}")
+    conn.commit()
+    return c.fetchone()
+
+def get_guard_ID(guard_ID):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM guardian WHERE ID = {guard_ID}")
+    conn.commit()
+    return c.fetchone()
+
+def get_phone_ID(ID):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM phone WHERE ID = {ID}")
+    conn.commit()
+    return c.fetchall()
+
+def get_phone_ID_type(ID, type):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM phone WHERE ID = {ID} AND type = '{type}'")
+    conn.commit()
+    return c.fetchone()
+
 def print_tables():
     conn = db_connection()
     c = conn.cursor()
@@ -636,5 +816,10 @@ def main():
     printer(get_fee_charge(), 'fee_charge')
     printer(get_invoice(), 'invoice')
     printer(get_amount(), 'amount')
+    printer(get_treatment(), 'treatment')
+    printer(get_record(), 'record')
+    printer(get_review(), 'review')
+    printer(get_guard(), 'guardian')
+    printer(get_phone(), 'phone')
 
 main()
