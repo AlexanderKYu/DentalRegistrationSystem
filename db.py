@@ -705,6 +705,20 @@ def get_pat_ID(ID):
     conn.commit()
     return c.fetchone()
 
+def get_pat_fName_LName_DOB(first_name, last_name, date_of_birth):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"""SELECT p.ID
+                  FROM patient AS p,users AS u
+                  WHERE u.first_name = '{first_name}'
+                  AND u.last_name = '{last_name}'
+                  AND p.date_of_birth = '{date_of_birth}'
+                  AND u.role = 'pat'
+                  AND p.ID = u.ID""")
+    conn.commit()
+    return c.fetchall()
+
+
 def get_users_SSN(SSN):
     conn = db_connection()
     c = conn.cursor()
@@ -899,5 +913,6 @@ def main():
     printer(get_phone(), 'phone')
     printer(get_payment(), 'payment')
     printer(get_symptom(), 'symptom')
+    print(get_pat_fName_LName_DOB('Daniel', 'Ng', '2001/02/13'))
 
 main()
