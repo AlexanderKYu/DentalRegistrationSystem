@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" type="text/css" href="styles/style.css" />
+        <link rel="stylesheet" href="assets/font-awesome-4.7.0/css/font-awesome.min.css" />
+        <title>SEG3125 Lab 2 Grocery Store</title>
+
+        <style>
+            .content {
+                min-width: 290px;
+	            padding-top: 130px;
+                width:100%;
+                text-align: center;
+            }
+        </style>
+
+    </head>
+    <body>
+        <div class="content">
+            <h1>Welcome to King Edward Dentistry</h1>
+
+            <form method="POST" action="">
+                <p>First Name</p>
+                <input type = "text" id="firstName" name="firstName">
+
+                <p>Last Name</p>
+                <input type = "text" id="lastName" name="lastName">
+
+                <p>Date of Birth</p>
+                <input type = "text" id="dob" name="dob" placeholder="YYYY/MM/DD">
+            </form>
+
+            <br>
+
+            <dir class ="form-group">
+                {{ form.firstName.label(class="form-control-label")}}
+                {{ form.firstName(class="form-control-label form-control-lg")}}
+            </dir>
+
+            
+
+            <button>
+                Search
+            </button>
+
+            
+
+        </div>
+
+
+
+    </body>
+</html>

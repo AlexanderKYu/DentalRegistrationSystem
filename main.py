@@ -1,5 +1,6 @@
-from flask import Flask
+from flask import Flask, render_template
 from db import *
+from patientsearchform import PatientSearchForm
 import sqlite3
 
 app = Flask(__name__)
@@ -16,6 +17,11 @@ def home():
 def user_info():
     print(get_users())
     return "Users page has rendered!"
+
+@app.route("/patient")
+def patient():
+    form = PatientSearchForm()
+    return render_template('patient.html', title ='Patient', form=form)
 
 @app.route("/emp")
 def emp_info():
