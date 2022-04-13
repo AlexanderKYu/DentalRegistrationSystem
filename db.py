@@ -768,6 +768,13 @@ def get_appointment_patient_info(patient_ID, date):
     conn.commit()
     return c.fetchone()
 
+def get_appointment_list_patient_info(patient_ID):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM appointment WHERE patient_ID = {patient_ID}")
+    conn.commit()
+    return c.fetchall()
+
 def get_insurance_claim_ID(claim_ID):
     conn = db_connection()
     c = conn.cursor()
