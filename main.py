@@ -35,8 +35,11 @@ def patient():
 
        patientID = get_pat_fName_LName_DOB(first_name, last_name, dob)[0][0]
        
-       return "record " + str (get_record_patient_ID(patientID))
-
+       try:
+            return str (get_appointment_list_patient_info(patientID)[0]) ##past appointment and future appointment
+            
+       except IndexError:
+            return "No Previous or Upcoming Appointments"
 
     return render_template('patient.html', title ='Patient', form=form)
 
