@@ -843,7 +843,14 @@ def get_record_patient_ID(patient_ID):
     c = conn.cursor()
     c.execute(f"SELECT * FROM record WHERE patient_ID = {patient_ID}")
     conn.commit()
-    return c.fetchone()
+    return c.fetchall()
+
+def get_appointment_procedure_patient_ID(patient_ID):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM appointment_procedure WHERE patient_ID = {patient_ID}")
+    conn.commit()
+    return c.fetchall()
 
 def get_review_patient_ID(patient_ID):
     conn = db_connection()
