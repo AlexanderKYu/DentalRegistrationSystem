@@ -819,6 +819,13 @@ def get_appointment_procedure_appPro_ID(appPro_ID):
     conn.commit()
     return c.fetchone()
 
+def get_appointment_appointment_ID(appointment_ID):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM appointment WHERE appointment_ID = {appointment_ID}")
+    conn.commit()
+    return c.fetchone()
+
 def get_fee_charge_fee_ID(fee_ID):
     conn = db_connection()
     c = conn.cursor()
