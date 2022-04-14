@@ -93,7 +93,6 @@ def db_init():
                  patient_ID INTEGER NOT NULL,
                  patient_charge INTEGER NOT NULL,
                  insurance_charge INTEGER NOT NULL,
-                 insurance VARCHAR(20) NOT NULL,
                  claim_ID INTEGER NOT NULL,
                  covered_by_emp INTEGER,
                  FOREIGN KEY (claim_ID) REFERENCES insurance_claim(claim_ID),
@@ -106,14 +105,15 @@ def db_init():
     c.execute("""CREATE TABLE IF NOT EXISTS appointment_procedure (
                  appPro_ID INTEGER PRIMARY KEY AUTOINCREMENT,
                  patient_ID INTEGER NOT NULL,
-                 date VARCHAR(10) NOT NULL,
+                 appointment_ID INTEGER NOT NULL,
                  procedure_code INTEGER NOT NULL,
                  procedure_type VARCHAR(20) NOT NULL,
                  description VARCHAR(300),
                  tooth_involved INTEGER,
                  payment_ID INTEGER NOT NULL,
                  FOREIGN KEY (patient_ID) REFERENCES patient(ID),
-                 FOREIGN KEY (payment_ID) REFERENCES patient_billing(payment_ID)
+                 FOREIGN KEY (payment_ID) REFERENCES patient_billing(payment_ID),
+                 FOREIGN KEY (appointment_ID) REFERENCES appointment(appointment_ID)
                  );
     """)
 
@@ -135,7 +135,6 @@ def db_init():
                  discount INTEGER NOT NULL,
                  penalty INTEGER NOT NULL,
                  fee_ID INTEGER NOT NULL,
-                 insurance VARCHAR(20) NOT NULL,
                  FOREIGN KEY (appPro_ID) REFERENCES appointment_procedure(appPro_ID),
                  FOREIGN KEY (patient_ID) REFERENCES patient(ID),
                  FOREIGN KEY (fee_ID) REFERENCES fee_charge(fee_ID)
@@ -154,10 +153,8 @@ def db_init():
                  treatment_ID INTEGER PRIMARY KEY AUTOINCREMENT,
                  appointment_ID INTEGER NOT NULL,
                  appPro_ID INTEGER NOT NULL,
-                 appointment_type VARCHAR(20) NOT NULL,
                  treatment_type VARCHAR(20) NOT NULL,
                  medication VARCHAR(20) NOT NULL,
-                 tooth_involved INTEGER,
                  comment VARCHAR(300) NOT NULL,
                  FOREIGN KEY (appointment_ID) REFERENCES appointment(appointment_ID),
                  FOREIGN KEY (appPro_ID) REFERENCES appointment_procedure(appPro_ID)
@@ -264,14 +261,15 @@ def create_sample_data():
     insert_branch(290, 'Bremner', 'Toronto', 'ON', 'M5V3L9', 'NULL', 0)
     insert_branch(2000, 'Meadowvale', 'Toronto', 'ON', 'M1B5K7', 'NULL', 0)
 
-    # salary, branch_ID, role, first_name, middle_initial, last_name, street_number, street_name, apt_number, city, province, postal_code, SSN, email, gender
-    insert_emp(60000, 2, 'emp', 'Alexander', 'KS', 'Yu', 27, 'Ambercroft', 'NULL', 'Scarborough', 'ON', 'M1W2Z6', 300120635, 'ayu041@uottawa.ca', 'male')
+    # emp_type, salary, branch_ID, role, first_name, middle_initial, last_name, street_number, street_name, apt_number, city, province, postal_code, SSN, email, gender
+    insert_emp('FT', 60000, 1, 'emp', 'Alexander', 'KS', 'Yu', 27, 'Ambercroft', 'NULL', 'Scarborough', 'ON', 'M1W2Z6', 300120635, 'ayu041@uottawa.ca', 'male')
+    assign_man(1, 1)
+    insert_emp('FT', 65000, 2, 'den', 'Alexis', 'R', 'Verana', 90, 'University', 'NULL', 'Ottawa', 'ON', 'K1N6N5', 300116080, 'avera086@uottawa.ca', 'female')
     assign_man(2, 2)
-    insert_emp(65000, 3, 'den', 'Alexis', 'R', 'Verana', 90, 'University', 'NULL', 'Ottawa', 'ON', 'K1N6N5', 300116080, 'avera086@uottawa.ca', 'female')
-    assign_man(3, 3)
-    insert_emp(60000, 2, 'recep', 'Vanisha', 'NULL', 'Bagga', 45, 'Mann', 36, 'Ottawa', 'ON', 'K1N6Y7', 300191679, 'vbagg019@uottawa.ca', 'female')
-    insert_emp(62000, 3, 'dass', 'Christiane', 'A', 'Meherete', 350, 'Victoria', 'NULL', 'Toronto', 'ON', 'M5B2K3', 300116269, 'cmehe017@uottawa.ca', 'female')
-    insert_emp(65000, 2, 'den', 'Coralie', 'B', 'Ostertag', 27, 'College', 'NULL', 'Toronto', 'ON', 'M5S1A1', 300174530, 'coste017@uottawa.ca', 'female')
+    insert_emp('FT', 60000, 1, 'recep', 'Vanisha', 'NULL', 'Bagga', 45, 'Mann', 36, 'Ottawa', 'ON', 'K1N6Y7', 300191679, 'vbagg019@uottawa.ca', 'female')
+    insert_emp('FT', 62000, 2, 'dass', 'Christiane', 'A', 'Meherete', 350, 'Victoria', 'NULL', 'Toronto', 'ON', 'M5B2K3', 300116269, 'cmehe017@uottawa.ca', 'female')
+    insert_emp('FT', 65000, 1, 'den', 'Coralie', 'B', 'Ostertag', 27, 'College', 'NULL', 'Toronto', 'ON', 'M5S1A1', 300174530, 'coste017@uottawa.ca', 'female')
+    insert_emp('FT', 40000, 2, 'recep', 'Toto', 'NULL', 'Wolff', 54, 'University', 'NULL', 'Toronto', 'ON', 'M5S2L1', 932049561, 'totoWolff@f1merc.ca', 'male')
 
     # insurance, date_of_birth, age, role, first_name, middle_initial, last_name, street_number, street_name, apt_number, city, province, postal_code, SSN, email, gender
     insert_pat('Manulife', '1972/12/15', 49, 'pat', 'Emily', 'R', 'Cruz', 23, 'King Edward', 'NULL', 'Ottawa', 'ON', 'K2N5G6', 151312658, 'emil54@yahoo.ca', 'female')
@@ -279,34 +277,44 @@ def create_sample_data():
     insert_pat('Aviva', '2001/02/13', 21, 'pat', 'Daniel', 'NULL', 'Ng', 5, 'Huntwood', 'NULL', 'Scarborough', 'ON', 'M1W5G7', 753126145, 'dannyphantom@gmail.com', 'male')
 
     # patient_ID, employee_ID, date, start_time, end_time, appointment_type, status, room_number
-    insert_appointment(6, 2, '2022/04/15', '11:25', '13:10', 'cleaning', 'scheduled', 14)
+    insert_appointment(get_users_SSN(151312658)[0], 2, '2022/04/15', '11:25', '13:10', 'cleaning', 'scheduled', 14)
+    insert_appointment(get_users_SSN(753126145)[0], 5, '2022/04/01', '10:15', '12:30', 'Root Canal', 'completed', 3)
 
     insert_insurance_claim(5000)
     insert_insurance_claim(6500)
 
-    # patient_ID, patient_charge, insurance_charge, insurance, claim_ID, covered_by_emp
-    insert_patient_billing(get_users_SSN(753126145)[0], 250, 50, 'Aviva', 1, 'NULL')
+    # patient_ID, patient_charge, insurance_charge, claim_ID, covered_by_emp
+    insert_patient_billing(get_users_SSN(151312658)[0], 250, 50, 1, 'NULL')
+    insert_patient_billing(get_users_SSN(753126145)[0], 500, 2400, 2, 'NULL')
 
-    # patient_ID, date, procedure_code, procedure_type, description, tooth_involved, payment_ID
-    insert_appointment_procedure(get_users_SSN(753126145)[0], '2022/04/21', 5, 'cleaning', 'General cleaning', 'NULL', 1)
+    # patient_ID, appointment_ID, procedure_code, procedure_type, description, tooth_involved, payment_ID
+    insert_appointment_procedure(get_users_SSN(151312658)[0], get_appointment_patient_info(get_users_SSN(151312658)[0], '2022/04/15')[0], 5, 'cleaning', 'General cleaning', 'NULL', 1)
+    insert_appointment_procedure(get_users_SSN(753126145)[0], get_appointment_patient_info(get_users_SSN(753126145)[0], '2022/04/01')[0], 13, 'Root Canal', 'T10 RC', 10, 2)
 
     # no fee charge as user was not late / cancelled 24 hours before
     # appPro_ID, fee_code, charge
     insert_fee_charge(1, 0, 0)
+    insert_fee_charge(2, 0, 0)
 
-    # appPro_ID, date_of_issue, patient_ID, patient_charge, insurance_charge, discount, penalty, fee_ID, insurance
-    insert_invoice(1, '2022/04/21', get_users_SSN(753126145)[0], 250, 50, 0, 0, 1, get_pat_ID(get_users_SSN(753126145)[0])[1])
+    # appPro_ID, date_of_issue, patient_ID, patient_charge, insurance_charge, discount, penalty, fee_ID
+    insert_invoice(1, '2022/04/21', get_users_SSN(151312658)[0], 250, 50, 0, 0, 1)
+    insert_invoice(2, '2022/04/10', get_users_SSN(753126145)[0], 500, 2400, 0, 0, 2)
 
+    # appPro_ID, quantity, substance_type
     insert_amount(1, 50, 'Flouride')
+    insert_amount(2, 30, 'Procaine')
 
-    # appointment_ID, appPro_ID, appointment_type, treatment_type, medication, tooth_involved, comment
-    insert_treatment(1, 1, 'cleaning', 'None', 'None', 'NULL', 'General cleaning')
+    # appointment_ID, appPro_ID, treatment_type, medication, comment
+    insert_treatment(1, 1, 'None', 'None', 'General cleaning')
+    insert_treatment(2, 2, 'Pain killers', 'opioid', 'T10 RT completed wait till checkup')
 
     # patient_ID, treatment_ID
-    insert_record(get_users_SSN(753126145)[0], 1)
+    insert_record(get_users_SSN(151312658)[0], 1)
+    insert_record(get_users_SSN(753126145)[0], 2)
 
     # patient_ID, professionalism, communication, cleanliness, value
-    insert_review(get_users_SSN(753126145)[0], 5, 5, 5, 5)
+    insert_review(get_users_SSN(151312658)[0], 5, 5, 5, 5)
+    insert_review(get_users_SSN(753126145)[0], 5, 3, 4, 5)
 
     insert_pat('Sunlife', '2015/01/15', 7, 'pat', 'John', 'B', 'Flabs', 13, 'Marylane', 'NULL', 'Ottawa', 'ON', 'K1N3Z7', 301242471, 'jflabs@gmail.com', 'male')
     # insurance, date_of_birth, age, looks_over, role, first_name, middle_initial, last_name, street_number, street_name, apt_number, city, province, postal_code, SSN, email, gender
@@ -317,10 +325,11 @@ def create_sample_data():
     insert_phone(get_users_SSN(300120635)[0], 'work', '(416)123-4567')
 
     # payment_ID, payment_type, payment_number
-    insert_payment(get_patient_billing_patient_ID(get_users_SSN(753126145)[0])[0][0], 'credit card', 111111111111)
+    insert_payment(get_patient_billing_patient_ID(get_users_SSN(151312658)[0])[0][0], 'credit card', 111111111111)
+    insert_payment(get_patient_billing_patient_ID(get_users_SSN(151312658)[0])[0][0], 'debit card', 123412341234)
 
     # treatment_ID, symptom_type
-    insert_symptom(get_treatment()[0][0], 'drowsy')
+    insert_symptom(2, 'drowsy')
 
 # Please do not use this function to insert, use the insert_emp or insert_pat
 def insert_users(role, first_name, middle_initial, last_name, street_number, street_name, apt_number, city, province, postal_code, SSN, email, gender):
@@ -341,7 +350,7 @@ def insert_users(role, first_name, middle_initial, last_name, street_number, str
     entry = get_users_SSN(SSN)
     return entry
 
-def insert_emp(salary, branch_ID, role, first_name, middle_initial, last_name, street_number, street_name, apt_number, city, province, postal_code, SSN, email, gender):
+def insert_emp(emp_type, salary, branch_ID, role, first_name, middle_initial, last_name, street_number, street_name, apt_number, city, province, postal_code, SSN, email, gender):
     conn = db_connection()
     c = conn.cursor()
     entry = insert_users(role, first_name, middle_initial, last_name, street_number, street_name, apt_number, city, province, postal_code, SSN, email, gender)
@@ -349,7 +358,7 @@ def insert_emp(salary, branch_ID, role, first_name, middle_initial, last_name, s
     if (isinstance(entry, str)):
         return entry
     c.execute(f"""INSERT INTO employee (ID, employee_type, salary, branch_ID)
-                  VALUES ({entry[0]}, '{role}', {salary}, {branch_ID});""")
+                  VALUES ({entry[0]}, '{emp_type}', {salary}, {branch_ID});""")
     conn.commit()
 
     if (role == 'recep'):
@@ -405,11 +414,11 @@ def insert_insurance_claim(claim_code):
     entry = get_insurance_claim_ID(claim_ID)
     return entry
 
-def insert_patient_billing(patient_ID, patient_charge, insurance_charge, insurance, claim_ID, covered_by_emp):
+def insert_patient_billing(patient_ID, patient_charge, insurance_charge, claim_ID, covered_by_emp):
     conn = db_connection()
     c = conn.cursor()
-    c.execute(f"""INSERT INTO patient_billing (patient_ID, patient_charge, insurance_charge, insurance, claim_ID, covered_by_emp)
-                  VALUES ({patient_ID}, {patient_charge}, {insurance_charge}, '{insurance}', {claim_ID}, {covered_by_emp})""")
+    c.execute(f"""INSERT INTO patient_billing (patient_ID, patient_charge, insurance_charge, claim_ID, covered_by_emp)
+                  VALUES ({patient_ID}, {patient_charge}, {insurance_charge}, {claim_ID}, {covered_by_emp})""")
     conn.commit()
     row_ID = c.lastrowid
     c.execute(f"""SELECT * FROM patient_billing WHERE rowid = {row_ID}""")
@@ -417,11 +426,11 @@ def insert_patient_billing(patient_ID, patient_charge, insurance_charge, insuran
     entry = get_patient_billing_payment_ID(payment_ID)
     return entry
 
-def insert_appointment_procedure(patient_ID, date, procedure_code, procedure_type, description, tooth_involved, payment_ID):
+def insert_appointment_procedure(patient_ID, appointment_ID, procedure_code, procedure_type, description, tooth_involved, payment_ID):
     conn = db_connection()
     c = conn.cursor()
-    c.execute(f"""INSERT INTO appointment_procedure (patient_ID, date, procedure_code, procedure_type, description, tooth_involved, payment_ID)
-                  VALUES ({patient_ID}, '{date}', {procedure_code}, '{procedure_type}', '{description}', {tooth_involved}, {payment_ID})""")
+    c.execute(f"""INSERT INTO appointment_procedure (patient_ID, appointment_ID, procedure_code, procedure_type, description, tooth_involved, payment_ID)
+                  VALUES ({patient_ID}, {appointment_ID}, {procedure_code}, '{procedure_type}', '{description}', {tooth_involved}, {payment_ID})""")
     conn.commit()
     row_ID = c.lastrowid
     c.execute(f"""SELECT * FROM appointment_procedure WHERE rowid = {row_ID}""")
@@ -441,11 +450,11 @@ def insert_fee_charge(appPro_ID, fee_code, charge):
     entry = get_fee_charge_fee_ID(fee_ID)
     return entry
 
-def insert_invoice(appPro_ID, date_of_issue, patient_ID, patient_charge, insurance_charge, discount, penalty, fee_ID, insurance):
+def insert_invoice(appPro_ID, date_of_issue, patient_ID, patient_charge, insurance_charge, discount, penalty, fee_ID):
     conn = db_connection()
     c = conn.cursor()
-    c.execute(f"""INSERT INTO invoice (appPro_ID, date_of_issue, patient_ID, patient_charge, insurance_charge, discount, penalty, fee_ID, insurance)
-                  VALUES ({appPro_ID}, '{date_of_issue}', {patient_ID}, {patient_charge}, {insurance_charge}, {discount}, {penalty}, {fee_ID}, '{insurance}')""")
+    c.execute(f"""INSERT INTO invoice (appPro_ID, date_of_issue, patient_ID, patient_charge, insurance_charge, discount, penalty, fee_ID)
+                  VALUES ({appPro_ID}, '{date_of_issue}', {patient_ID}, {patient_charge}, {insurance_charge}, {discount}, {penalty}, {fee_ID})""")
     conn.commit()
     entry = get_invoice_appPro_ID(appPro_ID)
     return entry
@@ -463,11 +472,11 @@ def insert_amount(appPro_ID, quantity, substance_type):
     entry = get_amount_appPro_ID_substance_type(appPro_ID, substance_type)
     return entry
 
-def insert_treatment(appointment_ID, appPro_ID, appointment_type, treatment_type, medication, tooth_involved, comment):
+def insert_treatment(appointment_ID, appPro_ID, treatment_type, medication, comment):
     conn = db_connection()
     c = conn.cursor()
-    c.execute(f"""INSERT INTO treatment (appointment_ID, appPro_ID, appointment_type, treatment_type, medication, tooth_involved, comment)
-                  VALUES ({appointment_ID}, {appPro_ID}, '{appointment_type}', '{treatment_type}', '{medication}', {tooth_involved}, '{comment}')""")
+    c.execute(f"""INSERT INTO treatment (appointment_ID, appPro_ID, treatment_type, medication, comment)
+                  VALUES ({appointment_ID}, {appPro_ID}, '{treatment_type}', '{medication}', '{comment}')""")
     conn.commit()
     row_ID = c.lastrowid
     c.execute(f"""SELECT * FROM treatment WHERE rowid = {row_ID}""")
@@ -768,6 +777,13 @@ def get_appointment_patient_info(patient_ID, date):
     conn.commit()
     return c.fetchone()
 
+def get_appointment_list_patient_info(patient_ID):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM appointment WHERE patient_ID = {patient_ID}")
+    conn.commit()
+    return c.fetchall()
+
 def get_insurance_claim_ID(claim_ID):
     conn = db_connection()
     c = conn.cursor()
@@ -836,7 +852,14 @@ def get_record_patient_ID(patient_ID):
     c = conn.cursor()
     c.execute(f"SELECT * FROM record WHERE patient_ID = {patient_ID}")
     conn.commit()
-    return c.fetchone()
+    return c.fetchall()
+
+def get_appointment_procedure_patient_ID(patient_ID):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM appointment_procedure WHERE patient_ID = {patient_ID}")
+    conn.commit()
+    return c.fetchall()
 
 def get_review_patient_ID(patient_ID):
     conn = db_connection()
@@ -913,6 +936,5 @@ def main():
     printer(get_phone(), 'phone')
     printer(get_payment(), 'payment')
     printer(get_symptom(), 'symptom')
-    print(get_pat_fName_LName_DOB('Daniel', 'Ng', '2001/02/13'))
 
 main()
