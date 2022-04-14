@@ -14,12 +14,48 @@
                 width:100%;
                 text-align: center;
             }
+
+            table, th, td {
+                border: 1px solid;
+                width: auto;
+                margin-left: auto;
+                margin-right: auto;
+
+            }                  
         </style>
 
     </head>
     <body>
         <div class="content">
-            <h1>Welcome to APPOINTMENT</h1>
+            <h1>Welcome to Your Appointments</h1>
+
+            <table>
+
+                <tr>
+                    <th>Appointment Date</th>
+                    <th>Start-Time</th>
+                    <th>End-Time</th>
+                    <th>Appointment Type</th>
+                    <th>Appointment Status</th>
+                    <th>Room Number</th>
+                </tr>
+    
+                <tr>
+                    {% for row in table %}
+                       <td>{{row[0]}}</td> 
+                       <td>{{row[1]}}</td> 
+                       <td>{{row[2]}}</td>
+                       <td>{{row[3]}}</td>
+                       <td>{{row[4]}}</td>
+                       <td>{{row[5]}}</td>
+                    {% endfor %}
+                </tr>
+
+
+            </table>
+
+
+            
 
         </div>
 

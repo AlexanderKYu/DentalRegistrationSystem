@@ -9,8 +9,6 @@ app = Flask(__name__)
 
 app.config['SECRET_KEY'] = '6f80377f374a443dd2288eb00e322026'
 
-
-
 @app.route("/")
 def home():
     # status = insert_emp('client', 'John', 'D', 'Doe', 12, 'Toronto', 'Ontario', 123123123, 'JohnDoe@gmail.com', 'male')
@@ -29,84 +27,67 @@ def patient():
     form = PatientSearchForm()
 
     if request.method == "POST":
+
        first_name = request.form.get("fname")
-
        last_name = request.form.get("lname") 
-
        dob = request.form.get("dob")
 
        patientID = get_pat_fName_LName_DOB(first_name, last_name, dob)[0][0]
        
-       print("PATIENT  " + str(patientID))
- 
        try:
-            return str (get_appointment_list_patient_info(patientID)[0]) ##past appointment and future appointment
+            if "app" in request.form:
+                patientApp = get_appointment_list_patient_info(patientID)
+
+                nums = ''
+                for x in patientApp:
+                    for y in x:
+                        print(y)
+                        nums += str(y) + '&'
+
+                nums = nums[:-1]
+
+                return redirect(url_for('patient_app', patientApp = nums))
 
        except IndexError:
             #return ("No previous or upcoming appointments to show. Have a good!")
 
             if "app" in request.form:
-                print("APPOINTMENT OPEN")
-                print("APPOINTMENT ID  " + str(patientID))
-        
                 return redirect(url_for('patient_app', patientID = patientID))
     
             elif "treatment" in request.form: 
-                print("TREATMENT OPEN")
-
                 return redirect(url_for('patient_treatment', patientID = patientID))
         
             elif "invoice" in request.form: 
-                print("INVOICE OPENs")
-
                 return redirect(url_for('patient_invoice', patientID = patientID))
             
             #return redirect(url_for('patient_2', patientID = patientID))  #OPENS NEXT PAGE
 
     
     return render_template('patient.html', title='Patient', form=form)
-    #return render_template('patientChoose.html', title='PatientChoose')
-
-# @app.route("/patient_2", methods=['GET', 'POST'])
-# def patient_2():
-#     form = PatientChooseForm()
-
-#     patientID = request.args.get('patientID')
-#     #return "PATIENT CHOOSE " + str(patientID) 
-
-#     print("PATIENT CHOOSE  " + str(patientID))
-#     print("STILL  " +  str(patientID))
-
-#     if "app" in request.form:
-#         print("APPOINTMENT OPEN")
-#         print("APPOINTMENT ID  " + str(patientID))
-#         return redirect(url_for('patient_app', patientID = patientID))
-    
-#     elif "treatment" in request.form: 
-#         print("TREATMENT OPEN")
-#         return redirect(url_for('patient_treatment', patientID = patientID))
-    
-#     elif "invoice" in request.form: 
-#         print("INVOICE OPENs")
-#         return redirect(url_for('patient_invoice', patientID = patientID))
-
-#     return render_template('patient_2.html')  
-
 
 @app.route("/patient_app", methods=['GET', 'POST'])
 def patient_app():
 
     form = PatientAppForm()
 
-    patientID = request.args.get('patientID')
-    #return "PATIENT CHOOSE " + str(patientID) 
+    patientAppId = request.args.get('patientApp')
 
-    print("PATIENT APP  " + str(patientID))
-    print("STILL APP  " +  str(patientID))
-
-    return render_template('patient_app.html')  
-
-
+    nums = patientAppId.split('&')
+    
+    table = []
+    for x in nums:
+        app = []
+        data = get_appointment_appointment_ID(x)
+        app.append(data[3])
+        app.append(data[4])
+        app.append(data[5])
+        app.append(data[6])
+        app.append(data[7])
+        app.append(data[8])
+        table.append(app)
+    
+    print("Table " + str (table))
+    return render_template('patient_app.html', table=table)  
 
 @app.route("/patient_treatment", methods=['GET', 'POST'])
 def patient_treatment():
@@ -117,9 +98,6 @@ def patient_treatment():
 def patient_invoice():
 
     return render_template('patient_invoice.html')  
-
-
-
 
 @app.route("/emp")
 def emp_info():
