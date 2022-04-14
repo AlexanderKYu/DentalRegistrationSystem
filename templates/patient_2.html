@@ -19,7 +19,7 @@
     </head>
     <body>
         <div class="content">
-            <h1>Welcome to King Edward Dentistry</h1>
+            <h1>Welcome to YOUR NAME</h1>
 
             <!-- <form method="POST" action="">
                 <p>First Name</p>
@@ -32,26 +32,11 @@
                 <input type = "text" id="dob" name="dob" placeholder="YYYY/MM/DD">
             </form> -->
 
+            <h3>Please choose which you would like to view:</h3>
 
-            <form action="{{ url_for("patient")}}" method="post">
-                <br>
-                <label for="firstname">First Name:</label> 
-                <input type="text" id="firstname" name="fname"> 
-                
-                <br>
-                <br>
-                <label for="lastname">Last Name:</label>
-                <input type="text" id="lastname" name="lname">
+            <form action="{{ url_for("patient_2")}}" method="post">
 
                 <br>
-                <br>
-                <label for="date_of_birth">Date of Birth:</label>
-                <input type="text" id="date_of_birth" name="dob" placeholder="YYYY/MM/DD">
-
-                <br>
-                <br>
-                <br>
-                <h3>Please choose what you would like to view about your account.</h3>
                 <button type="submit" name="app" value="app">Your Appointment</button>
 
                 <br>
@@ -61,6 +46,7 @@
                 <br>
                 <br>
                 <button type="submit" name="invoice" value="invoice">Your Invoice Statements</button>
+
             </form>
 
             <!-- <div class="view_options">
@@ -77,6 +63,35 @@
                 </form>
 
             </div>  -->
+
+            <!-- {% block content %}
+                <table id="data" class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Age</th>
+                        <th>Address</th>
+                        <th>Phone Number</th>
+                        <th>Email</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <!-- {% for user in users %}
+                        <tr>
+                        <td>{{ user.name }}</td>
+                        <td>{{ user.age }}</td>
+                        <td>{{ user.address }}</td>
+                        <td>{{ user.phone }}</td>
+                        <td>{{ user.email }}</td>
+                        </tr> -->
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% endblock %} -->
+
+
+                
+
             
 
         </div>
