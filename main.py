@@ -2,6 +2,8 @@ from flask import Flask, render_template, flash, request, redirect, url_for
 from db import *
 from patientsearchform import PatientSearchForm
 from patientChooseForm import PatientChooseForm
+from patientform import ReceptionForm
+from appointform import AppointForm
 from patientAppForm import PatientAppForm
 import sqlite3
 
@@ -53,11 +55,110 @@ def patient():
             elif "invoice" in request.form:
                 return redirect(url_for('patient_invoice', patientID = patientID))
 
+
        except IndexError:
             #return ("No previous or upcoming appointments to show. Have a good!")
             return "error bruv"
 
     return render_template('patient.html', title='Patient', form=form)
+
+#     print("PATIENT CHOOSE  " + str(patientID))
+#     print("STILL  " +  str(patientID))
+
+#     if "app" in request.form:
+#         print("APPOINTMENT OPEN")
+#         print("APPOINTMENT ID  " + str(patientID))
+#         return redirect(url_for('patient_app', patientID = patientID))
+    
+#     elif "treatment" in request.form: 
+#         print("TREATMENT OPEN")
+#         return redirect(url_for('patient_treatment', patientID = patientID))
+    
+#     elif "invoice" in request.form: 
+#         print("INVOICE OPENs")
+#         return redirect(url_for('patient_invoice', patientID = patientID))
+
+#     return render_template('patient_2.html')  
+# this is new
+@app.route("/reception", methods=['GET', 'POST'])
+def reception():
+    form = ReceptionForm()
+    if request.method == "POST":
+        Modified_Insurance = request.form.get("modIns")
+        
+        Pfirst_name = request.form.get("pfname")
+        Pmiddle_name = request.form.get("pmname") 
+        Plast_name = request.form.get("plname") 
+        Prole = request.form.get("prle")
+        Pgender = request.form.get("pgen")
+        Pemail = request.form.get("pem")
+        Pssn = request.form.get("pssn")
+        Pstreetname = request.form.get("psname")
+        Pstreetnum = request.form.get("psnum")
+        Papartnum = request.form.get("panum")
+        Pcity = request.form.get("pcit")
+        Pprovince = request.form.get("pprov")
+        Ppostalcode = request.form.get("ppcode")
+        Pdob = request.form.get("pdob")
+        Pinsurance = request.form.get("pinsur")
+        Page = request.form.get("patage")
+
+        Efirst_name = request.form.get("efname")
+        Emiddle_name = request.form.get("emname") 
+        Elast_name = request.form.get("elname") 
+        Erole = request.form.get("erle")
+        Egender = request.form.get("egen")
+        Ebranch_ID = request.form.get("ebranch")
+        Eemployeetype = request.form.get("etype")
+        Esalary = request.form.get("esalary")
+        Eemail = request.form.get("eem")
+        Essn = request.form.get("essn")
+        Estreetname = request.form.get("esname")
+        Estreetnum = request.form.get("esnum")
+        Eapartnum = request.form.get("eanum")
+        Ecity = request.form.get("ecit")
+        Eprovince = request.form.get("eprov")
+        Epostalcode = request.form.get("epcode")
+        # insurance, date_of_birth, age, role, first_name, middle_initial, last_name, street_number, street_name, apt_number, city, province, postal_code, SSN, email, gender
+        if "preg" in request.form:
+            entry = insert_pat(Pinsurance, Pdob, Page, Prole, Pfirst_name, Pmiddle_name, Plast_name, Pstreetnum, Pstreetname, Papartnum, Pcity, Pprovince, Ppostalcode, Pssn, Pemail, Pgender)
+            print("PATIENT ADDED")
+        # emp_type, salary, branch_ID, role, first_name, middle_initial, last_name, street_number, street_name, apt_number, city, province, postal_code, SSN, email, gender
+        elif "ereg" in request.form:
+            entry = insert_pat(Eemployeetype, Esalary, Ebranch_ID, Erole, Efirst_name, Emiddle_initial, Elast_name, Estreetnum, Estreetname, Eapartnum, Ecity, Eprovince, Epostalcode, Essn, Eemail, Egender)
+            print("EMPLOYEE ADDED")
+        # TO BE IMPLEMENTED USING THE EDIT IN DB
+        elif "edit" in request.form: 
+            print("")
+            return redirect(url_for('patient_treatment'))
+        elif "appoint" in request.form: 
+            print("CREATE NEW APPOINT OPENs")
+            return redirect(url_for("appoint"))
+            
+            #return redirect(url_for('patient_2', patientID = patientID))  #OPENS NEXT PAGE
+
+    return render_template('reception.html', title = 'Patient Form', form=form)
+
+@app.route("/appoint", methods=['GET', 'POST'])
+def appoint():
+    form = AppointForm()
+    if request.method == "POST":
+        pid= request.form.get("pd")
+        eid = request.form.get("ed") 
+        date = request.form.get("da") 
+        starttime = request.form.get("start")
+        endtime = request.form.get("end")
+        appointtype = request.form.get("type") 
+        status = request.form.get("stat")
+        room = request.form.get("ro")
+
+        if "app" in request.form:
+            entry = insert_appointment(pid, eid, date, startime, endtime, appointtype, status, room)
+            print("APPOINTMENT ADDED")
+     
+
+    return render_template('appoint.html', title = 'Appointment Form', form=form)
+
 
 @app.route("/patient_app", methods=['GET', 'POST'])
 def patient_app():
@@ -168,3 +269,5 @@ def emp_info():
 
 if __name__ == "__main__":
     app.run()
+
+
