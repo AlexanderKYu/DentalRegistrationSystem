@@ -43,37 +43,29 @@ def patient():
                     for y in x:
                         print(y)
                         nums += str(y) + '&'
-
+                        
                 nums = nums[:-1]
-
                 return redirect(url_for('patient_app', patientApp = nums))
-
-       except IndexError:
-            #return ("No previous or upcoming appointments to show. Have a good!")
-
-            if "app" in request.form:
-                return redirect(url_for('patient_app', patientID = patientID))
-    
+            
             elif "treatment" in request.form: 
                 return redirect(url_for('patient_treatment', patientID = patientID))
         
             elif "invoice" in request.form: 
                 return redirect(url_for('patient_invoice', patientID = patientID))
-            
-            #return redirect(url_for('patient_2', patientID = patientID))  #OPENS NEXT PAGE
 
-    
+       except IndexError:
+            #return ("No previous or upcoming appointments to show. Have a good!")
+            return "error bruv"
+
     return render_template('patient.html', title='Patient', form=form)
 
 @app.route("/patient_app", methods=['GET', 'POST'])
 def patient_app():
 
     form = PatientAppForm()
-
     patientAppId = request.args.get('patientApp')
-
     nums = patientAppId.split('&')
-    
+
     table = []
     for x in nums:
         app = []
@@ -91,13 +83,83 @@ def patient_app():
 
 @app.route("/patient_treatment", methods=['GET', 'POST'])
 def patient_treatment():
+    patientId = request.args.get('patientID')
+    matrixEntry = get_record_patient_ID(patientId)
 
-    return render_template('patient_treatment.html')  
+    treatment = []
+
+    for x in matrixEntry:
+        treatment.append(x[1])
+
+    table = []
+    for y in treatment:
+        row = []
+        data = get_treatment_treatment_ID(y)
+        # appointment type index = 1
+        appID = get_appointment_appointment_ID(data[1])
+        row.append(appID[6])
+        row.append(data[3])
+        row.append(data[4])
+        symp = get_symptom_treatment_ID(y)[0]
+        row.append(symp[1])
+        appPro = get_appointment_procedure_appointment_ID(y)[0]
+        row.append(appPro[6])
+        row.append(data[5])
+        table.append(row)
+
+    return render_template('patient_treatment.html', table=table)
 
 @app.route("/patient_invoice", methods=['GET', 'POST'])
 def patient_invoice():
+    
+    patientId = request.args.get('patientID')
+    matrixEntry = get_invoice_patient_ID(patientId)
+    users = get_users_ID(patientId)
+    table2 = []
+    fName = users[2]
+    table2.append(fName)
+    mInit = users[3]
+    if (users[3] == None):
+        mInit= ''
+    table2.append(mInit)
+    lName = users[4]
+    table2.append(lName)
+    street_number = users[5]
+    table2.append(street_number)
+    street_name = users[6]
+    table2.append(street_name)
+    apt = users[7]
+    if (users[7] == None):
+        apt= ''
+    table2.append(apt)
+    city = users[8]
+    table2.append(city)
+    province = users[9]
+    table2.append(province)
+    code = users[10]
+    table2.append(code)
+    email = users[12]
+    table2.append(email)
+    insurance = get_pat_ID(patientId)[1]
+    table2.append(insurance)
+    phone = get_phone_ID(patientId)
+    phoneString = ''
+    for a in phone:
+        phoneString += a[1] + ': ' + a[2] + ' '
+    table2.append(phoneString)
 
-    return render_template('patient_invoice.html')  
+    table = []
+    for x in matrixEntry:
+        row = []
+        row.append(x[1])
+        row.append(x[3])
+        row.append(x[4])
+        row.append(int(x[3]) + int(x[4]))
+        row.append(x[5])
+        row.append(x[6])
+        table.append(row)
+
+    return render_template('patient_invoice.html', table=table, table2=table2)  
 
 @app.route("/emp")
 def emp_info():

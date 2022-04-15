@@ -39,27 +39,20 @@
                     <th>Appointment Status</th>
                     <th>Room Number</th>
                 </tr>
-    
-                <tr>
-                    {% for row in table %}
-                       <td>{{row[0]}}</td> 
-                       <td>{{row[1]}}</td> 
-                       <td>{{row[2]}}</td>
-                       <td>{{row[3]}}</td>
-                       <td>{{row[4]}}</td>
-                       <td>{{row[5]}}</td>
-                    {% endfor %}
-                </tr>
 
-
+                {% for row in table %}
+                    <tr>
+                        <td>{{row[0]}}</td> 
+                        <td>{{row[1]}}</td> 
+                        <td>{{row[2]}}</td>
+                        <td>{{row[3]}}</td>
+                        <td>{{row[4]}}</td>
+                        <td>{{row[5]}}</td>
+                    </tr>
+                {% endfor %}
+                
             </table>
 
-
-            
-
         </div>
-
-
-
     </body>
 </html>

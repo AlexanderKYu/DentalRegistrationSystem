@@ -279,7 +279,8 @@ def create_sample_data():
     # patient_ID, employee_ID, date, start_time, end_time, appointment_type, status, room_number
     insert_appointment(get_users_SSN(151312658)[0], 2, '2022/04/15', '11:25', '13:10', 'cleaning', 'scheduled', 14)
     insert_appointment(get_users_SSN(753126145)[0], 5, '2022/04/01', '10:15', '12:30', 'Root Canal', 'completed', 3)
-
+    insert_appointment(get_users_SSN(753126145)[0], 5, '2022/04/02', '16:30', '17:00', 'Checkup', 'completed', 3)
+    
     insert_insurance_claim(5000)
     insert_insurance_claim(6500)
 
@@ -321,8 +322,10 @@ def create_sample_data():
     insert_guard('Sunlife', '1995/03/12', 27, get_users_SSN(301242471)[0], 'guard', 'Claire', 'NULL', 'Flabs', 13, 'Marylane', 'NULL', 'Ottawa', 'ON', 'K1N3Z7', 687478291, 'claire23@gmail.com', 'female')
 
     # ID, type, phone_number
-    insert_phone(get_users_SSN(300120635)[0], 'cell', '(647)123-4567')
-    insert_phone(get_users_SSN(300120635)[0], 'work', '(416)123-4567')
+    insert_phone(get_users_SSN(300120635)[0], 'Cell', '(647)123-4567')
+    insert_phone(get_users_SSN(300120635)[0], 'Work', '(416)123-4567')
+    insert_phone(get_users_SSN(753126145)[0], 'Cell', '(647)214-7589')
+    insert_phone(get_users_SSN(753126145)[0], 'Work', '(416)007-6530')
 
     # payment_ID, payment_type, payment_number
     insert_payment(get_patient_billing_patient_ID(get_users_SSN(151312658)[0])[0][0], 'credit card', 111111111111)
@@ -902,6 +905,21 @@ def get_payment_payment_ID(payment_ID):
     c.execute(f"SELECT * FROM payment WHERE payment_ID = {payment_ID}")
     conn.commit()
     return c.fetchall()
+
+def get_appointment_procedure_appointment_ID(appointment_ID):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM appointment_procedure WHERE appointment_ID = {appointment_ID}")
+    conn.commit()
+    return c.fetchall()
+
+def get_invoice_patient_ID(patient_ID):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM invoice WHERE patient_ID = {patient_ID}")
+    conn.commit()
+    return c.fetchall()
+
 
 def print_tables():
     conn = db_connection()
