@@ -920,6 +920,30 @@ def get_invoice_patient_ID(patient_ID):
     conn.commit()
     return c.fetchall()
 
+def get_treatment_appointment_ID_appPro_ID(appointment_ID, appPro_ID):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"SELECT * FROM treatment WHERE appointment_ID = {appointment_ID} AND appPro_ID = {appPro_ID}")
+    conn.commit()
+    return c.fetchone()
+
+def update_treatment_treatment_type_treatment_ID(treatment_ID, treatment_type):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"UPDATE treatment SET treatment_type = '{treatment_type}' WHERE treatment_ID = {treatment_ID}")
+    conn.commit()
+
+def update_treatment_medication_treatment_ID(treatment_ID, medication):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"UPDATE treatment SET medication = '{medication}' WHERE treatment_ID = {treatment_ID}")
+    conn.commit()
+
+def update_treatment_comment_treatment_ID(treatment_ID, comment):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"UPDATE treatment SET comment = '{comment}' WHERE treatment_ID = {treatment_ID}")
+    conn.commit()
 
 def print_tables():
     conn = db_connection()

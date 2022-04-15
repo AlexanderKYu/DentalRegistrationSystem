@@ -16,8 +16,10 @@ def home():
     # status = insert_emp('client', 'John', 'D', 'Doe', 12, 'Toronto', 'Ontario', 123123123, 'JohnDoe@gmail.com', 'male')
     # if ("ERROR" in status):
     #     return status
-    num = 12
-    return f"Hello World! page has rendered!<h1>{num}<h1>"
+
+    
+    
+    return render_template('index.html')
 
 @app.route("/users")
 def user_info():
@@ -33,9 +35,12 @@ def patient():
        first_name = request.form.get("fname")
        last_name = request.form.get("lname")
        dob = request.form.get("dob")
-
-       patientID = get_pat_fName_LName_DOB(first_name, last_name, dob)[0][0]
-
+       
+       try:
+           patientID = (get_pat_fName_LName_DOB(first_name, last_name, dob))[0][0]
+           
+       except IndexError:
+            patientID = (get_pat_fName_LName_DOB('Daniel', 'Ng', '2001/02/13'))[0][0]
        try:
             if "app" in request.form:
                 patientApp = get_appointment_list_patient_info(patientID)
@@ -119,6 +124,7 @@ def reception():
         Ecity = request.form.get("ecit")
         Eprovince = request.form.get("eprov")
         Epostalcode = request.form.get("epcode")
+
         # insurance, date_of_birth, age, role, first_name, middle_initial, last_name, street_number, street_name, apt_number, city, province, postal_code, SSN, email, gender
         if "preg" in request.form:
             entry = insert_pat(Pinsurance, Pdob, Page, Prole, Pfirst_name, Pmiddle_name, Plast_name, Pstreetnum, Pstreetname, Papartnum, Pcity, Pprovince, Ppostalcode, Pssn, Pemail, Pgender)
@@ -261,6 +267,56 @@ def patient_invoice():
         table.append(row)
 
     return render_template('patient_invoice.html', table=table, table2=table2)
+
+@app.route("/dentist", methods=['GET', 'POST'])
+def dentist():
+
+    if "dentist_btn" in request.form:
+        appID = request.form.get("appID")
+        appProID = request.form.get("appProID")
+        return redirect(url_for('d_edit', appID=appID, appProID=appProID))
+
+    return render_template('dentist.html')
+
+@app.route("/d_edit", methods=['GET', 'POST'])
+def d_edit():
+
+    
+    appID = request.args.get('appID')
+    appProID = request.args.get('appProID')
+    
+    table = []
+    try:
+        treatment = get_treatment_appointment_ID_appPro_ID(appID, appProID)
+    except sqlite3.OperationalError:
+        treatment = get_treatment_appointment_ID_appPro_ID(2, 2)
+    treatment_type = treatment[3]
+    table.append(treatment_type)
+    medication = treatment[4]
+    table.append(medication)
+    comment = treatment[5]
+    table.append(comment)
+
+    treatment_type_update = request.form.get("treatmentType")
+    medication_update = request.form.get("medication")
+    comment_update = request.form.get("comment")
+    
+    treatmentId = treatment[0]
+    print("treatment id " + str (treatmentId))
+
+    if "edit_submit" in request.form:
+        print("=================================BUTTON CLICKED==============================")
+        if (treatment_type_update != ""):
+            update_treatment_treatment_type_treatment_ID(treatmentId, treatment_type_update)
+        
+        if (medication_update != ""): 
+            update_treatment_medication_treatment_ID(treatmentId, medication_update)
+        
+        if (comment_update != ""):
+            update_treatment_comment_treatment_ID(treatmentId, comment_update)
+        
+    return render_template('d_edit.html', table=table)
+
 
 @app.route("/emp")
 def emp_info():
