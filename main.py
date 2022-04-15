@@ -29,11 +29,11 @@ def patient():
     if request.method == "POST":
 
        first_name = request.form.get("fname")
-       last_name = request.form.get("lname") 
+       last_name = request.form.get("lname")
        dob = request.form.get("dob")
 
        patientID = get_pat_fName_LName_DOB(first_name, last_name, dob)[0][0]
-       
+
        try:
             if "app" in request.form:
                 patientApp = get_appointment_list_patient_info(patientID)
@@ -43,14 +43,14 @@ def patient():
                     for y in x:
                         print(y)
                         nums += str(y) + '&'
-                        
+
                 nums = nums[:-1]
                 return redirect(url_for('patient_app', patientApp = nums))
-            
-            elif "treatment" in request.form: 
+
+            elif "treatment" in request.form:
                 return redirect(url_for('patient_treatment', patientID = patientID))
-        
-            elif "invoice" in request.form: 
+
+            elif "invoice" in request.form:
                 return redirect(url_for('patient_invoice', patientID = patientID))
 
        except IndexError:
@@ -77,9 +77,9 @@ def patient_app():
         app.append(data[7])
         app.append(data[8])
         table.append(app)
-    
+
     print("Table " + str (table))
-    return render_template('patient_app.html', table=table)  
+    return render_template('patient_app.html', table=table)
 
 @app.route("/patient_treatment", methods=['GET', 'POST'])
 def patient_treatment():
@@ -111,7 +111,7 @@ def patient_treatment():
 
 @app.route("/patient_invoice", methods=['GET', 'POST'])
 def patient_invoice():
-    
+
     patientId = request.args.get('patientID')
     matrixEntry = get_invoice_patient_ID(patientId)
     users = get_users_ID(patientId)
@@ -119,7 +119,7 @@ def patient_invoice():
     fName = users[2]
     table2.append(fName)
     mInit = users[3]
-    if (users[3] == None):
+    if (users[3] == 'NULL'):
         mInit= ''
     table2.append(mInit)
     lName = users[4]
@@ -159,7 +159,7 @@ def patient_invoice():
         row.append(x[6])
         table.append(row)
 
-    return render_template('patient_invoice.html', table=table, table2=table2)  
+    return render_template('patient_invoice.html', table=table, table2=table2)
 
 @app.route("/emp")
 def emp_info():
