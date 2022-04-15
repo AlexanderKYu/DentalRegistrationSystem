@@ -16,9 +16,6 @@ def home():
     # status = insert_emp('client', 'John', 'D', 'Doe', 12, 'Toronto', 'Ontario', 123123123, 'JohnDoe@gmail.com', 'male')
     # if ("ERROR" in status):
     #     return status
-
-    
-    
     return render_template('index.html')
 
 @app.route("/users")
@@ -35,10 +32,10 @@ def patient():
        first_name = request.form.get("fname")
        last_name = request.form.get("lname")
        dob = request.form.get("dob")
-       
+
        try:
            patientID = (get_pat_fName_LName_DOB(first_name, last_name, dob))[0][0]
-           
+
        except IndexError:
             patientID = (get_pat_fName_LName_DOB('Daniel', 'Ng', '2001/02/13'))[0][0]
        try:
@@ -74,27 +71,27 @@ def patient():
 #         print("APPOINTMENT OPEN")
 #         print("APPOINTMENT ID  " + str(patientID))
 #         return redirect(url_for('patient_app', patientID = patientID))
-    
-#     elif "treatment" in request.form: 
+
+#     elif "treatment" in request.form:
 #         print("TREATMENT OPEN")
 #         return redirect(url_for('patient_treatment', patientID = patientID))
-    
-#     elif "invoice" in request.form: 
+
+#     elif "invoice" in request.form:
 #         print("INVOICE OPENs")
 #         return redirect(url_for('patient_invoice', patientID = patientID))
 
-#     return render_template('patient_2.html')  
+#     return render_template('patient_2.html')
 # this is new
 @app.route("/reception", methods=['GET', 'POST'])
 def reception():
     form = ReceptionForm()
     if request.method == "POST":
+        Modified_pid = request.form.get("modPat")
         Modified_Insurance = request.form.get("modIns")
-        
+
         Pfirst_name = request.form.get("pfname")
-        Pmiddle_name = request.form.get("pmname") 
-        Plast_name = request.form.get("plname") 
-        Prole = request.form.get("prle")
+        Pmiddle_name = request.form.get("pmname")
+        Plast_name = request.form.get("plname")
         Pgender = request.form.get("pgen")
         Pemail = request.form.get("pem")
         Pssn = request.form.get("pssn")
@@ -109,8 +106,8 @@ def reception():
         Page = request.form.get("patage")
 
         Efirst_name = request.form.get("efname")
-        Emiddle_name = request.form.get("emname") 
-        Elast_name = request.form.get("elname") 
+        Emiddle_initial = request.form.get("emname")
+        Elast_name = request.form.get("elname")
         Erole = request.form.get("erle")
         Egender = request.form.get("egen")
         Ebranch_ID = request.form.get("ebranch")
@@ -127,20 +124,25 @@ def reception():
 
         # insurance, date_of_birth, age, role, first_name, middle_initial, last_name, street_number, street_name, apt_number, city, province, postal_code, SSN, email, gender
         if "preg" in request.form:
-            entry = insert_pat(Pinsurance, Pdob, Page, Prole, Pfirst_name, Pmiddle_name, Plast_name, Pstreetnum, Pstreetname, Papartnum, Pcity, Pprovince, Ppostalcode, Pssn, Pemail, Pgender)
+            entry = insert_pat(Pinsurance, Pdob, Page, 'pat', Pfirst_name, Pmiddle_name, Plast_name, Pstreetnum, Pstreetname, Papartnum, Pcity, Pprovince, Ppostalcode, int(Pssn), Pemail, Pgender)
+            printer(get_users(), 'users')
+            printer(get_pat(), 'patient')
             print("PATIENT ADDED")
         # emp_type, salary, branch_ID, role, first_name, middle_initial, last_name, street_number, street_name, apt_number, city, province, postal_code, SSN, email, gender
         elif "ereg" in request.form:
-            entry = insert_pat(Eemployeetype, Esalary, Ebranch_ID, Erole, Efirst_name, Emiddle_initial, Elast_name, Estreetnum, Estreetname, Eapartnum, Ecity, Eprovince, Epostalcode, Essn, Eemail, Egender)
+
+            entry = insert_emp(Eemployeetype, Esalary, Ebranch_ID, Erole, Efirst_name, Emiddle_initial, Elast_name, Estreetnum, Estreetname, Eapartnum, Ecity, Eprovince, Epostalcode, int(Essn), Eemail, Egender)
+            printer(get_users(), 'users')
+            printer(get_emp(), 'employee')
             print("EMPLOYEE ADDED")
-        # TO BE IMPLEMENTED USING THE EDIT IN DB
-        elif "edit" in request.form: 
-            print("")
-            return redirect(url_for('patient_treatment'))
-        elif "appoint" in request.form: 
+        elif "editP" in request.form:
+            update_patient_patient_ID_insurance(int(Modified_pid), Modified_Insurance)
+            printer(get_pat(), 'patient')
+
+        elif "appoint" in request.form:
             print("CREATE NEW APPOINT OPENs")
             return redirect(url_for("appoint"))
-            
+
             #return redirect(url_for('patient_2', patientID = patientID))  #OPENS NEXT PAGE
 
     return render_template('reception.html', title = 'Patient Form', form=form)
@@ -150,18 +152,19 @@ def appoint():
     form = AppointForm()
     if request.method == "POST":
         pid= request.form.get("pd")
-        eid = request.form.get("ed") 
-        date = request.form.get("da") 
+        eid = request.form.get("ed")
+        date = request.form.get("da")
         starttime = request.form.get("start")
         endtime = request.form.get("end")
-        appointtype = request.form.get("type") 
+        appointtype = request.form.get("type")
         status = request.form.get("stat")
         room = request.form.get("ro")
 
         if "app" in request.form:
-            entry = insert_appointment(pid, eid, date, startime, endtime, appointtype, status, room)
+            entry = insert_appointment(pid, eid, date, starttime, endtime, appointtype, status, room)
+            printer(get_appointment(), 'appointment')
             print("APPOINTMENT ADDED")
-     
+
 
     return render_template('appoint.html', title = 'Appointment Form', form=form)
 
@@ -281,10 +284,10 @@ def dentist():
 @app.route("/d_edit", methods=['GET', 'POST'])
 def d_edit():
 
-    
+
     appID = request.args.get('appID')
     appProID = request.args.get('appProID')
-    
+
     table = []
     try:
         treatment = get_treatment_appointment_ID_appPro_ID(appID, appProID)
@@ -300,7 +303,7 @@ def d_edit():
     treatment_type_update = request.form.get("treatmentType")
     medication_update = request.form.get("medication")
     comment_update = request.form.get("comment")
-    
+
     treatmentId = treatment[0]
     print("treatment id " + str (treatmentId))
 
@@ -308,13 +311,13 @@ def d_edit():
         print("=================================BUTTON CLICKED==============================")
         if (treatment_type_update != ""):
             update_treatment_treatment_type_treatment_ID(treatmentId, treatment_type_update)
-        
-        if (medication_update != ""): 
+
+        if (medication_update != ""):
             update_treatment_medication_treatment_ID(treatmentId, medication_update)
-        
+
         if (comment_update != ""):
             update_treatment_comment_treatment_ID(treatmentId, comment_update)
-        
+
     return render_template('d_edit.html', table=table)
 
 
@@ -325,5 +328,3 @@ def emp_info():
 
 if __name__ == "__main__":
     app.run()
-
-

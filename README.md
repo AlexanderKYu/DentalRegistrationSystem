@@ -16,6 +16,7 @@ CSI 2132
 - [ ] Python3
 - [ ] pip
 - [ ] Flask
+- [ ] flask-wtf (pip install flask-wtf)
 
 *Please ensure that all dependencies are correctly installed before proceeding*
 

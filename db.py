@@ -279,7 +279,7 @@ def create_sample_data():
     # patient_ID, employee_ID, date, start_time, end_time, appointment_type, status, room_number
     insert_appointment(get_users_SSN(151312658)[0], 2, '2022/04/15', '11:25', '13:10', 'cleaning', 'scheduled', 14)
     insert_appointment(get_users_SSN(753126145)[0], 5, '2022/04/01', '10:15', '12:30', 'Root Canal', 'completed', 3)
-    insert_appointment(get_users_SSN(753126145)[0], 5, '2022/04/02', '16:30', '17:00', 'Checkup', 'completed', 3)
+    insert_appointment(get_users_SSN(753126145)[0], 5, '2022/04/10', '16:30', '17:00', 'Checkup', 'completed', 10)
 
     insert_insurance_claim(5000)
     insert_insurance_claim(6500)
@@ -307,7 +307,7 @@ def create_sample_data():
 
     # appointment_ID, appPro_ID, treatment_type, medication, comment
     insert_treatment(1, 1, 'None', 'None', 'General cleaning')
-    insert_treatment(2, 2, 'Pain killers', 'opioid', 'T10 RT completed wait till checkup')
+    insert_treatment(2, 2, 'Pain killers', 'opioid', 'T10 RC completed wait till checkup')
 
     # patient_ID, treatment_ID
     insert_record(get_users_SSN(151312658)[0], 1)
@@ -945,6 +945,12 @@ def update_treatment_comment_treatment_ID(treatment_ID, comment):
     c.execute(f"UPDATE treatment SET comment = '{comment}' WHERE treatment_ID = {treatment_ID}")
     conn.commit()
 
+def update_patient_patient_ID_insurance(patient_ID, insurance):
+    conn = db_connection()
+    c = conn.cursor()
+    c.execute(f"UPDATE patient SET insurance = '{insurance}' WHERE ID = {patient_ID}")
+    conn.commit()
+
 def print_tables():
     conn = db_connection()
     c = conn.cursor()
@@ -966,24 +972,24 @@ def main():
     delete_all_data()
     # initialize_data()
     create_sample_data()
-    # print_tables()
-    # printer(get_users(), 'users')
-    # printer(get_emp(), 'employee')
-    # printer(get_pat(), 'patient')
-    # printer(get_branch(), 'branch')
-    # printer(get_appointment(), 'appointment')
-    # printer(get_insurance_claim(), 'insurance_claim')
-    # printer(get_patient_billing(), 'patient_billing')
-    # printer(get_appointment_procedure(), 'appointment_procedure')
-    # printer(get_fee_charge(), 'fee_charge')
-    # printer(get_invoice(), 'invoice')
-    # printer(get_amount(), 'amount')
-    # printer(get_treatment(), 'treatment')
-    # printer(get_record(), 'record')
-    # printer(get_review(), 'review')
-    # printer(get_guard(), 'guardian')
-    # printer(get_phone(), 'phone')
-    # printer(get_payment(), 'payment')
-    # printer(get_symptom(), 'symptom')
+    print_tables()
+    printer(get_users(), 'users')
+    printer(get_emp(), 'employee')
+    printer(get_pat(), 'patient')
+    printer(get_branch(), 'branch')
+    printer(get_appointment(), 'appointment')
+    printer(get_insurance_claim(), 'insurance_claim')
+    printer(get_patient_billing(), 'patient_billing')
+    printer(get_appointment_procedure(), 'appointment_procedure')
+    printer(get_fee_charge(), 'fee_charge')
+    printer(get_invoice(), 'invoice')
+    printer(get_amount(), 'amount')
+    printer(get_treatment(), 'treatment')
+    printer(get_record(), 'record')
+    printer(get_review(), 'review')
+    printer(get_guard(), 'guardian')
+    printer(get_phone(), 'phone')
+    printer(get_payment(), 'payment')
+    printer(get_symptom(), 'symptom')
 
 main()
